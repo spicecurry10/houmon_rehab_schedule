@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訪問リハビリ予定｜利用者・曜日時間設定</title>
+  <style>
+    :root{
+      --bg:#f2f6f4;
+      --panel:#ffffff;
+      --text:#17211b;
+      --muted:#66756d;
+      --line:#dbe8df;
+      --green:#2f7d46;
+      --green-dark:#1f5d34;
+      --green-deep:#164628;
+      --blue:#2563eb;
+      --danger:#d94255;
+      --warn:#e39b17;
+      --soft-green:#ecf8f0;
+      --soft-blue:#eef5ff;
+      --soft-danger:#fff1f3;
+      --shadow:0 12px 28px rgba(29,76,47,.12);
+      --shadow-soft:0 7px 18px rgba(29,76,47,.08);
+      --focus:0 0 0 4px rgba(47,125,70,.18);
+    }
+
+    *{box-sizing:border-box}
+    html{background:var(--bg);min-height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+      background:linear-gradient(180deg,#f9fcfa 0%,#edf5f0 48%,#f7f7f4 100%);
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      color:#fff;
+      background:linear-gradient(135deg,var(--green-deep),var(--green) 58%,#58a96e);
+      box-shadow:0 9px 24px rgba(22,70,40,.24);
+    }
+
+    .header-inner{
+      max-width:1080px;
+      margin:0 auto;
+      padding:16px 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    h1{
+      margin:0;
+      font-size:23px;
+      font-weight:900;
+      letter-spacing:.04em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .header-actions{display:flex;gap:8px;align-items:center}
+    main{max-width:1080px;margin:0 auto;padding:14px 12px 32px}
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:10px 14px;
+      min-height:42px;
+      font:inherit;
+      font-weight:900;
+      color:#fff;
+      background:linear-gradient(180deg,#327f49,var(--green-dark));
+      cursor:pointer;
+      box-shadow:0 7px 16px rgba(47,125,70,.18);
+      transition:transform .12s ease,filter .12s ease,box-shadow .12s ease;
+      touch-action:manipulation;
+    }
+
+    button:hover{filter:brightness(.98);transform:translateY(-1px)}
+    button:active{transform:translateY(0);box-shadow:none}
+    button.secondary{background:#fff;color:#23312a;border:1px solid var(--line);box-shadow:var(--shadow-soft)}
+    button.blue{background:linear-gradient(180deg,#2f6eee,var(--blue))}
+    button.danger{background:linear-gradient(180deg,#eb596b,var(--danger))}
+    button.icon{width:44px;padding:0;font-size:22px}
+    button:disabled{opacity:.55;cursor:default;transform:none}
+    button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;box-shadow:var(--focus)}
+
+    input,textarea,select{
+      width:100%;
+      border:1px solid #ccddd2;
+      border-radius:13px;
+      padding:10px 12px;
+      min-height:42px;
+      font:inherit;
+      color:var(--text);
+      background:#fff;
+    }
+
+    textarea{resize:vertical;min-height:74px}
+    label{font-size:13px;font-weight:900;color:#34483c}
+
+    .tabs{
+      position:sticky;
+      top:73px;
+      z-index:18;
+      background:rgba(246,250,247,.88);
+      border-bottom:1px solid rgba(217,232,222,.92);
+      backdrop-filter:blur(10px);
+    }
+
+    .tab-inner{
+      max-width:1080px;
+      margin:0 auto;
+      padding:10px 12px;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+    }
+
+    .tab-btn{
+      background:#fff;
+      color:var(--green-dark);
+      border:1px solid #cfe3d5;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(180deg,#3b9652,var(--green));
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .screen{display:none}
+    .screen.active{display:block}
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+      align-items:center;
+      margin-bottom:13px;
+    }
+
+    .toolbar .grow{flex:1 1 210px}
+
+    .summary-bar{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:13px 14px;
+      margin-bottom:13px;
+      color:#185b36;
+      background:linear-gradient(135deg,#eef7ff,#eefaf2);
+      border:1px solid #cfebd8;
+      border-radius:18px;
+      font-size:17px;
+      font-weight:900;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .count-badge{
+      min-width:48px;
+      padding:7px 13px;
+      border-radius:14px;
+      color:var(--green);
+      background:#fff;
+      text-align:center;
+      font-size:19px;
+      font-weight:900;
+      box-shadow:0 5px 14px rgba(0,0,0,.1);
+    }
+
+    .user-list,.schedule-list{display:flex;flex-direction:column;gap:12px}
+
+    .card{
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(217,232,222,.92);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .user-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:13px;
+    }
+
+    .user-main{min-width:0}
+    .user-name-line{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .user-name{
+      font-size:20px;
+      font-weight:900;
+      border:1px solid transparent;
+      background:transparent;
+      padding:7px 8px;
+    }
+
+    .user-name:focus{background:#fff;border-color:#cfe3d5}
+    .user-actions{display:flex;gap:8px;align-items:center}
+    .meta-line{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:13px;font-weight:800}
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      padding:5px 9px;
+      border-radius:999px;
+      background:var(--soft-green);
+      border:1px solid #cfe9d7;
+      color:#275d39;
+      white-space:nowrap;
+    }
+
+    .chip.blue{background:var(--soft-blue);border-color:#cfe0ff;color:#1d4e9a}
+    .chip.warn{background:#fff7e8;border-color:#f2d49b;color:#7b530f}
+
+    .empty{
+      padding:28px 14px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:850;
+      border:1px dashed #bdd4c3;
+      background:#fff;
+      border-radius:20px;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .date-grid{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:9px;
+      align-items:center;
+      width:100%;
+    }
+
+    .report-grid{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:9px;
+      align-items:center;
+      width:100%;
+    }
+
+    .schedule-card{padding:13px}
+    .schedule-head{
+      display:grid;
+      grid-template-columns:88px 1fr auto;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .time-box{
+      min-height:54px;
+      border-radius:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      background:linear-gradient(180deg,#2f7d46,#1f5d34);
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+
+    .schedule-name{font-size:20px;font-weight:900}
+    .schedule-detail{color:var(--muted);font-weight:800;font-size:14px}
+    .schedule-body{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      border-top:1px solid #edf3ee;
+      padding-top:11px;
+    }
+
+    .record-details{
+      margin-top:12px;
+      border:1px solid #dbeadf;
+      border-radius:18px;
+      background:#fbfdfb;
+      overflow:hidden;
+    }
+
+    .record-details summary{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 14px;
+      color:var(--green-dark);
+      font-size:17px;
+      font-weight:900;
+      cursor:pointer;
+      list-style:none;
+      background:linear-gradient(180deg,#f8fcf9,#eef8f1);
+    }
+
+    .record-details summary::-webkit-details-marker{display:none}
+    .record-details summary::before{content:"▼";color:#6aa66e;font-size:14px}
+    .record-details:not([open]) summary::before{content:"▶"}
+
+    .record-form{
+      padding:13px;
+      border-top:1px solid #e7f0ea;
+    }
+
+    .record-section{
+      margin-bottom:16px;
+      border:1px solid #edf3ee;
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .record-section:last-child{margin-bottom:0}
+
+    .record-section-title{
+      padding:10px 13px;
+      color:#075d31;
+      background:#f6faf7;
+      font-size:17px;
+      font-weight:900;
+    }
+
+    .record-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      padding:13px;
+    }
+
+    .record-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .record-field.full{grid-column:1 / -1}
+    .record-field textarea{min-height:82px}
+
+    .record-card{
+      padding:11px;
+      border:1px solid #dcebe1;
+      border-radius:16px;
+      background:#fbfdfb;
+    }
+
+    .record-card-title{
+      margin-bottom:8px;
+      color:#24392d;
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .choice-row,.tool-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:9px;
+    }
+
+    .pill-choice{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      min-height:38px;
+      padding:7px 10px;
+      border:1px solid #d2e4d8;
+      border-radius:999px;
+      background:#fff;
+      color:#17211b;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .pill-choice input{
+      width:auto;
+      min-height:auto;
+      accent-color:var(--green);
+    }
+
+    .status-toggle{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding-top:10px;
+    }
+
+    .status-toggle label{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border:1px solid #d7e5dc;
+      border-radius:999px;
+      background:#fff;
+      font-size:14px;
+    }
+
+    .status-toggle input{width:auto;min-height:auto;accent-color:var(--green)}
+
+    .week-grid{
+      display:grid;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .day-column{
+      min-height:180px;
+      border:1px solid #dce9e0;
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .day-head{
+      padding:10px;
+      text-align:center;
+      color:#fff;
+      background:linear-gradient(180deg,#347f4c,#1f5d34);
+      font-weight:900;
+    }
+
+    .day-body{padding:9px;display:flex;flex-direction:column;gap:8px}
+    .mini-item{
+      padding:8px 9px;
+      border:1px solid #e3eee7;
+      border-radius:12px;
+      background:#f9fcfa;
+      font-size:13px;
+      font-weight:800;
+      color:#33463a;
+    }
+
+    .mini-time{font-size:16px;color:var(--green-dark);font-weight:900}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:60;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(14,30,21,.52);
+      backdrop-filter:blur(5px);
+    }
+
+    .modal-backdrop.hidden{display:none}
+    .modal-card{
+      width:min(820px,100%);
+      max-height:90vh;
+      overflow:auto;
+      padding:18px;
+      border-radius:22px;
+      background:#fff;
+      box-shadow:0 22px 60px rgba(10,30,18,.3);
+    }
+
+    .modal-title{margin:0 0 14px;text-align:center;font-size:23px;font-weight:900}
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .settings-name{margin-bottom:12px}
+
+    .day-setting{
+      display:grid;
+      grid-template-columns:92px 120px 100px 1fr;
+      gap:8px;
+      align-items:end;
+      padding:10px;
+      border:1px solid #e1eee6;
+      border-radius:16px;
+      background:#fbfdfb;
+      margin-bottom:9px;
+    }
+
+    .day-check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-height:42px;
+      font-size:16px;
+      color:#24352b;
+    }
+
+    .day-check input{width:auto;min-height:auto;accent-color:var(--green)}
+    .memo-cell{grid-column:1 / -1}
+
+    .danger-zone{
+      margin-top:14px;
+      padding:12px;
+      border:1px solid #ffd0d7;
+      border-radius:16px;
+      background:var(--soft-danger);
+    }
+
+    .copy-buffer{
+      position:absolute;
+      left:-9999px;
+      top:-9999px;
+      opacity:0;
+    }
+
+    @media(max-width:820px){
+      .header-inner{padding:14px 12px 12px}
+      h1{font-size:20px}
+      .tabs{top:67px}
+      .tab-inner{grid-template-columns:1fr 1fr 1fr;gap:6px}
+      .tab-btn{padding:8px 7px;font-size:14px}
+      .toolbar button{flex:1 1 auto}
+      .date-grid{grid-template-columns:1fr 1fr}
+      .date-grid input{grid-column:1 / -1}
+      .report-grid{grid-template-columns:1fr}
+      .user-row{grid-template-columns:1fr}
+      .user-actions{justify-content:flex-start}
+      .schedule-head{grid-template-columns:78px 1fr}
+      .schedule-head button{grid-column:1 / -1}
+      .schedule-body{grid-template-columns:1fr}
+      .record-grid,.record-grid.four{grid-template-columns:1fr}
+      .week-grid{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr}
+      .day-setting{grid-template-columns:1fr 1fr}
+      .day-check{grid-column:1 / -1}
+      .memo-cell{grid-column:1 / -1}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>訪問リハビリ予定</h1>
+      <div class="header-actions">
+        <button type="button" id="exportBtn" class="secondary">保存</button>
+        <button type="button" id="importBtn" class="secondary">復元</button>
+        <span id="userCount" class="count-badge">0</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="画面切替">
+    <div class="tab-inner">
+      <button type="button" class="tab-btn active" data-screen="users">利用者</button>
+      <button type="button" class="tab-btn" data-screen="daily">日別予定</button>
+      <button type="button" class="tab-btn" data-screen="weekly">曜日別</button>
+    </div>
+  </nav>
+
+  <main>
+    <section id="usersScreen" class="screen active">
+      <div class="toolbar">
+        <button type="button" id="addUserBtn">＋ 利用者を追加</button>
+        <input type="search" id="userSearch" class="grow" placeholder="利用者検索">
+      </div>
+      <div class="summary-bar">
+        <span id="userSummary">利用者：0名</span>
+        <span>自動保存</span>
+      </div>
+      <div id="userList" class="user-list"></div>
+    </section>
+
+    <section id="dailyScreen" class="screen">
+      <div class="toolbar">
+        <div class="report-grid">
+          <input type="month" id="reportMonth">
+          <button type="button" id="copyReportBtn">報告書用出力</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="date-grid">
+          <input type="date" id="selectedDate">
+          <button type="button" id="todayBtn">今日</button>
+          <button type="button" id="addOneDayBtn" class="blue">日付別追加</button>
+        </div>
+      </div>
+      <div class="summary-bar">
+        <span id="dailySummary">予定：0件</span>
+        <button type="button" id="copyDailyBtn" class="secondary">日別コピー</button>
+      </div>
+      <div id="scheduleList" class="schedule-list"></div>
+    </section>
+
+    <section id="weeklyScreen" class="screen">
+      <div class="summary-bar">
+        <span id="weeklySummary">曜日別リハビリ予定</span>
+        <button type="button" id="copyWeeklyBtn" class="secondary">週間コピー</button>
+      </div>
+      <div id="weeklyGrid" class="week-grid"></div>
+    </section>
+  </main>
+
+  <div id="userModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h2 id="userModalTitle" class="modal-title">利用者設定</h2>
+      <div class="settings-name">
+        <label for="modalUserName">利用者名</label>
+        <input type="text" id="modalUserName" placeholder="例：山田 太郎">
+      </div>
+      <div id="daySettings"></div>
+      <div class="modal-actions">
+        <button type="button" id="saveUserSettingsBtn">保存</button>
+        <button type="button" id="closeUserModalBtn" class="secondary">閉じる</button>
+      </div>
+      <div id="deleteArea" class="danger-zone hidden">
+        <button type="button" id="deleteUserBtn" class="danger">この利用者を削除</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="oneDayModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">日付別リハビリ予定</h2>
+      <div class="form-grid">
+        <div>
+          <label for="oneDayDate">日付</label>
+          <input type="date" id="oneDayDate">
+        </div>
+        <div>
+          <label for="oneDayUser">利用者</label>
+          <select id="oneDayUser"></select>
+        </div>
+        <div>
+          <label for="oneDayTime">時間</label>
+          <input type="time" id="oneDayTime">
+        </div>
+        <div>
+          <label for="oneDayDuration">時間数</label>
+          <select id="oneDayDuration">
+            <option value="20分">20分</option>
+            <option value="40分">40分</option>
+            <option value="60分">60分</option>
+          </select>
+        </div>
+        <div class="memo-cell">
+          <label for="oneDayMemo">メモ</label>
+          <textarea id="oneDayMemo" placeholder="申し送り・注意点"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="saveOneDayBtn">追加</button>
+        <button type="button" id="closeOneDayBtn" class="secondary">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="importFile" accept="application/json" hidden>
+  <textarea id="copyBuffer" class="copy-buffer" aria-hidden="true"></textarea>
+
+  <script>
+    const STORAGE_KEY = "houmon_rehab_schedule_v1";
+    const DAYS = [
+      {key:"mon", label:"月", full:"月曜日"},
+      {key:"tue", label:"火", full:"火曜日"},
+      {key:"wed", label:"水", full:"水曜日"},
+      {key:"thu", label:"木", full:"木曜日"},
+      {key:"fri", label:"金", full:"金曜日"},
+      {key:"sat", label:"土", full:"土曜日"},
+      {key:"sun", label:"日", full:"日曜日"}
+    ];
+    const JS_DAY_TO_KEY = ["sun","mon","tue","wed","thu","fri","sat"];
+    const DEFAULT_PROGRAMS = {
+      mon:"歩行練習・下肢筋力訓練",
+      tue:"ROM訓練・基本動作練習",
+      wed:"バランス練習・ADL練習",
+      thu:"歩行練習・屋外移動確認",
+      fri:"自主訓練指導・環境調整",
+      sat:"状態確認・軽負荷リハ",
+      sun:"状態確認・生活動作練習"
+    };
+    const ASSISTANCE_OPTIONS = ["自立","見守り","一部介助","全介助"];
+    const HOUSEWORK_OPTIONS = ["実施あり","一部実施","困難","未実施"];
+    const MOBILITY_TOOLS = ["独歩","杖","歩行器","歩行車","車椅子"];
+    const VITAL_FIELDS = [
+      ["vitals.sbp","SBP","例：128"],
+      ["vitals.dbp","DBP","例：72"],
+      ["vitals.spo2","SpO2","例：97"],
+      ["vitals.pr","PR","例：76"]
+    ];
+    const OVERVIEW_FIELDS = [
+      ["overview.expression","表情","例：穏やか／眠そう"],
+      ["overview.fatigue","疲労感","例：軽度あり"],
+      ["overview.painComplaint","疼痛の訴え","例：腰部痛あり"],
+      ["overview.speech","会話・発言","例：「今日は少し腰が重い」","textarea"]
+    ];
+    const PHYSICAL_FIELDS = [
+      ["physical.cardiopulmonary","心肺機能"],
+      ["physical.skin","皮膚状態"],
+      ["physical.inflammation","炎症所見"],
+      ["physical.pain","疼痛：部位／程度／誘発動作"],
+      ["physical.sensation","知覚"],
+      ["physical.rom","関節可動域"],
+      ["physical.mmt","筋力：MMT"],
+      ["physical.tone","筋緊張"],
+      ["physical.coordination","協調性"],
+      ["physical.balance","バランス"],
+      ["physical.footCare","足部・爪ケア"]
+    ];
+    const BASIC_ACTIONS = [
+      ["basic.bedMobility","起居"],
+      ["basic.sitToStand","起立"],
+      ["basic.transfer","移乗"]
+    ];
+    const ADL_ACTIONS = [
+      ["adl.meal","食事",ASSISTANCE_OPTIONS],
+      ["adl.medication","服薬",ASSISTANCE_OPTIONS],
+      ["adl.grooming","整容",ASSISTANCE_OPTIONS],
+      ["adl.toilet","トイレ",ASSISTANCE_OPTIONS],
+      ["adl.excretion","排便・排尿コントロール",ASSISTANCE_OPTIONS],
+      ["adl.bathing","入浴",ASSISTANCE_OPTIONS],
+      ["adl.dressing","更衣",ASSISTANCE_OPTIONS],
+      ["adl.stairs","階段昇降",ASSISTANCE_OPTIONS],
+      ["adl.housework","家事動作",HOUSEWORK_OPTIONS]
+    ];
+    const INTERVENTIONS = [
+      ["interventions.rom","ROM訓練"],
+      ["interventions.strength","筋力訓練"],
+      ["interventions.balance","バランス練習"],
+      ["interventions.gait","歩行練習"],
+      ["interventions.basic","基本動作練習"],
+      ["interventions.adl","ADL練習"],
+      ["interventions.selfTraining","自主訓練指導"],
+      ["interventions.environment","環境調整"],
+      ["interventions.family","家族指導"]
+    ];
+    const SPECIAL_FIELDS = [
+      ["special.fall","転倒"],
+      ["special.medical","受診・服薬変更"],
+      ["special.contact","家族・ケアマネ連絡"],
+      ["special.risk","リスク・注意点"],
+      ["special.next","次回方針"],
+      ["special.other","その他","", "textarea"]
+    ];
+
+    let state = loadState();
+    let editingUserId = "";
+
+    const $ = id => document.getElementById(id);
+
+    function uid(){
+      if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+    }
+
+    function today(){
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+
+    function dateLabel(dateText){
+      const d = new Date(dateText + "T00:00:00");
+      const day = DAYS.find(x => x.key === JS_DAY_TO_KEY[d.getDay()]);
+      return `${dateText.replaceAll("-","/")}（${day ? day.label : ""}）`;
+    }
+
+    function monthLabel(monthText){
+      const [year, month] = String(monthText || today().slice(0,7)).split("-");
+      return `${year}年${month}月`;
+    }
+
+    function dayKeyFromDate(dateText){
+      const d = new Date(dateText + "T00:00:00");
+      return JS_DAY_TO_KEY[d.getDay()];
+    }
+
+    function selectedDayKey(){
+      return dayKeyFromDate($("selectedDate").value || today());
+    }
+
+    function datesInMonth(monthText){
+      const [year, month] = String(monthText || today().slice(0,7)).split("-").map(Number);
+      const last = new Date(year, month, 0).getDate();
+      return Array.from({length:last}, (_, i) => `${year}-${String(month).padStart(2,"0")}-${String(i + 1).padStart(2,"0")}`);
+    }
+
+    function emptySchedule(){
+      const out = {};
+      DAYS.forEach(day => {
+        out[day.key] = {
+          enabled:false,
+          time:"09:00",
+          duration:"40分",
+          program:DEFAULT_PROGRAMS[day.key],
+          memo:""
+        };
+      });
+      return out;
+    }
+
+    function emptyLevelMemo(){
+      return {level:"", memo:""};
+    }
+
+    function emptyMove(){
+      return {tools:[], memo:""};
+    }
+
+    function emptyIntervention(){
+      return {done:false, note:""};
+    }
+
+    function emptyRecord(dateText){
+      return {
+        visitDate:dateText || today(),
+        vitals:{sbp:"", dbp:"", spo2:"", pr:""},
+        overview:{expression:"", fatigue:"", painComplaint:"", speech:""},
+        physical:{
+          cardiopulmonary:"",
+          skin:"",
+          inflammation:"",
+          pain:"",
+          sensation:"",
+          rom:"",
+          mmt:"",
+          tone:"",
+          coordination:"",
+          balance:"",
+          footCare:""
+        },
+        basic:{
+          bedMobility:emptyLevelMemo(),
+          sitToStand:emptyLevelMemo(),
+          transfer:emptyLevelMemo(),
+          indoorMove:emptyMove(),
+          outdoorMove:emptyMove(),
+          gait:""
+        },
+        adl:{
+          meal:emptyLevelMemo(),
+          medication:emptyLevelMemo(),
+          grooming:emptyLevelMemo(),
+          toilet:emptyLevelMemo(),
+          excretion:emptyLevelMemo(),
+          bathing:emptyLevelMemo(),
+          dressing:emptyLevelMemo(),
+          stairs:emptyLevelMemo(),
+          housework:emptyLevelMemo()
+        },
+        interventions:{
+          rom:emptyIntervention(),
+          strength:emptyIntervention(),
+          balance:emptyIntervention(),
+          gait:emptyIntervention(),
+          basic:emptyIntervention(),
+          adl:emptyIntervention(),
+          selfTraining:emptyIntervention(),
+          environment:emptyIntervention(),
+          family:emptyIntervention()
+        },
+        special:{fall:"", medical:"", contact:"", risk:"", next:"", other:""}
+      };
+    }
+
+    function mergeRecord(base, saved){
+      if(!saved || typeof saved !== "object") return base;
+      const out = {...base, ...saved};
+      out.vitals = {...base.vitals, ...(saved.vitals || {})};
+      out.overview = {...base.overview, ...(saved.overview || {})};
+      out.physical = {...base.physical, ...(saved.physical || {})};
+      out.special = {...base.special, ...(saved.special || {})};
+      out.basic = {...base.basic, ...(saved.basic || {})};
+      ["bedMobility","sitToStand","transfer"].forEach(key => {
+        out.basic[key] = {...base.basic[key], ...(saved.basic && saved.basic[key] ? saved.basic[key] : {})};
+      });
+      ["indoorMove","outdoorMove"].forEach(key => {
+        const value = saved.basic && saved.basic[key] ? saved.basic[key] : {};
+        out.basic[key] = {...base.basic[key], ...value, tools:Array.isArray(value.tools) ? value.tools : []};
+      });
+      out.adl = {...base.adl, ...(saved.adl || {})};
+      Object.keys(base.adl).forEach(key => {
+        out.adl[key] = {...base.adl[key], ...(saved.adl && saved.adl[key] ? saved.adl[key] : {})};
+      });
+      out.interventions = {...base.interventions, ...(saved.interventions || {})};
+      Object.keys(base.interventions).forEach(key => {
+        out.interventions[key] = {...base.interventions[key], ...(saved.interventions && saved.interventions[key] ? saved.interventions[key] : {})};
+      });
+      return out;
+    }
+
+    function normalizeRecords(records){
+      const out = {};
+      if(!records || typeof records !== "object") return out;
+      Object.entries(records).forEach(([id, record]) => {
+        out[id] = mergeRecord(emptyRecord(record && record.visitDate ? record.visitDate : today()), record);
+      });
+      return out;
+    }
+
+    function makeUser(name){
+      return {id:uid(), name:String(name||"未設定").trim() || "未設定", schedule:emptySchedule()};
+    }
+
+    function normalizeUser(user){
+      const base = makeUser(user && user.name ? user.name : "未設定");
+      return {
+        ...base,
+        ...user,
+        id:user && user.id ? user.id : base.id,
+        name:String(user && user.name ? user.name : "未設定").trim() || "未設定",
+        schedule:{...emptySchedule(), ...(user && user.schedule ? user.schedule : {})}
+      };
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return {users:[], oneDay:[], done:{}, records:{}};
+        const data = JSON.parse(raw);
+        return {
+          users:Array.isArray(data.users) ? data.users.map(normalizeUser) : [],
+          oneDay:Array.isArray(data.oneDay) ? data.oneDay : [],
+          done:data.done && typeof data.done === "object" ? data.done : {},
+          records:normalizeRecords(data.records)
+        };
+      }catch(e){
+        return {users:[], oneDay:[], done:{}, records:{}};
+      }
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function showScreen(name){
+      document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+      $(`${name}Screen`).classList.add("active");
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.screen === name));
+      if(name === "daily") renderDaily();
+      if(name === "weekly") renderWeekly();
+    }
+
+    function scheduleSummary(user){
+      const items = DAYS
+        .filter(day => user.schedule[day.key] && user.schedule[day.key].enabled)
+        .map(day => `${day.label} ${user.schedule[day.key].time}`);
+      return items.length ? items : ["曜日時間なし"];
+    }
+
+    function renderUsers(){
+      const q = $("userSearch").value.trim().toLowerCase();
+      const list = state.users
+        .filter(user => !q || user.name.toLowerCase().includes(q))
+        .sort((a,b) => a.name.localeCompare(b.name, "ja"));
+      $("userCount").textContent = state.users.length;
+      $("userSummary").textContent = `利用者：${state.users.length}名`;
+      if(!list.length){
+        $("userList").innerHTML = `<div class="empty">利用者がありません</div>`;
+        return;
+      }
+      $("userList").innerHTML = list.map(user => `
+        <article class="card user-row" data-user-id="${user.id}">
+          <div class="user-main">
+            <div class="user-name-line">
+              <input class="user-name" value="${escapeHtml(user.name)}" aria-label="利用者名">
+            </div>
+            <div class="meta-line">
+              ${scheduleSummary(user).slice(0,7).map(x => `<span class="chip">${escapeHtml(x)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="user-actions">
+            <button type="button" class="blue open-settings">設定</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function entriesForDate(dateText){
+      const key = dayKeyFromDate(dateText);
+      const weekly = state.users
+        .filter(user => user.schedule[key] && user.schedule[key].enabled)
+        .map(user => ({
+          id:`weekly:${dateText}:${user.id}:${key}`,
+          source:"weekly",
+          date:dateText,
+          userId:user.id,
+          userName:user.name,
+          ...user.schedule[key]
+        }));
+      const oneDay = state.oneDay
+        .filter(item => item.date === dateText)
+        .map(item => {
+          const user = state.users.find(u => u.id === item.userId);
+          return {...item, source:"date", userName:user ? user.name : item.userName || "未設定"};
+        });
+      return [...weekly, ...oneDay].sort((a,b) => String(a.time||"").localeCompare(String(b.time||"")) || String(a.userName||"").localeCompare(String(b.userName||""), "ja"));
+    }
+
+    function getPath(obj, path){
+      return String(path).split(".").reduce((cur, key) => cur && cur[key] !== undefined ? cur[key] : "", obj);
+    }
+
+    function setPath(obj, path, value){
+      const parts = String(path).split(".");
+      let cur = obj;
+      parts.slice(0,-1).forEach(key => {
+        if(!cur[key] || typeof cur[key] !== "object") cur[key] = {};
+        cur = cur[key];
+      });
+      cur[parts[parts.length - 1]] = value;
+    }
+
+    function ensureRecord(entry){
+      if(!state.records || typeof state.records !== "object") state.records = {};
+      state.records[entry.id] = mergeRecord(emptyRecord(entry.date), state.records[entry.id]);
+      return state.records[entry.id];
+    }
+
+    function recordForRender(entry){
+      return mergeRecord(emptyRecord(entry.date), state.records && state.records[entry.id]);
+    }
+
+    function recordHasContent(record, defaultDate){
+      const base = emptyRecord(defaultDate || today());
+      return JSON.stringify(mergeRecord(base, record)) !== JSON.stringify(base);
+    }
+
+    function inputField(record, path, labelText, placeholder="", kind="input", extraClass=""){
+      const value = getPath(record, path) || "";
+      const tag = kind === "textarea"
+        ? `<textarea data-record-field="${escapeAttr(path)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value)}</textarea>`
+        : `<input type="${kind === "date" ? "date" : "text"}" data-record-field="${escapeAttr(path)}" value="${escapeAttr(value)}" placeholder="${escapeAttr(placeholder)}">`;
+      return `
+        <div class="record-field ${extraClass}">
+          <label>${escapeHtml(labelText)}</label>
+          ${tag}
+        </div>
+      `;
+    }
+
+    function fieldGrid(record, fields, gridClass=""){
+      return fields.map(field => inputField(record, field[0], field[1], field[2] || "", field[3] || "input")).join("");
+    }
+
+    function levelCard(entryId, record, path, labelText, options){
+      const current = getPath(record, `${path}.level`) || "";
+      return `
+        <div class="record-card">
+          <div class="record-card-title">${escapeHtml(labelText)}</div>
+          <div class="choice-row">
+            ${options.map(option => `
+              <label class="pill-choice">
+                <input type="radio" name="${escapeAttr(entryId + "-" + path)}" data-record-radio="${escapeAttr(path + ".level")}" value="${escapeAttr(option)}" ${current === option ? "checked" : ""}>
+                ${escapeHtml(option)}
+              </label>
+            `).join("")}
+          </div>
+          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}" placeholder="メモ">
+        </div>
+      `;
+    }
+
+    function moveCard(record, path, labelText){
+      const selected = getPath(record, `${path}.tools`);
+      const tools = Array.isArray(selected) ? selected : [];
+      return `
+        <div class="record-card">
+          <div class="record-card-title">${escapeHtml(labelText)}</div>
+          <div class="tool-row">
+            ${MOBILITY_TOOLS.map(tool => `
+              <label class="pill-choice">
+                <input type="checkbox" data-record-tool="${escapeAttr(path + ".tools")}" value="${escapeAttr(tool)}" ${tools.includes(tool) ? "checked" : ""}>
+                ${escapeHtml(tool)}
+              </label>
+            `).join("")}
+          </div>
+          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}" placeholder="メモ">
+        </div>
+      `;
+    }
+
+    function interventionCard(record, path, labelText){
+      return `
+        <div class="record-card">
+          <div class="record-card-title">${escapeHtml(labelText)}</div>
+          <div class="choice-row">
+            <label class="pill-choice">
+              <input type="checkbox" data-record-check="${escapeAttr(path + ".done")}" ${getPath(record, path + ".done") ? "checked" : ""}>
+              実施
+            </label>
+          </div>
+          <textarea data-record-field="${escapeAttr(path + ".note")}" placeholder="内容・負荷量・反応など">${escapeHtml(getPath(record, path + ".note") || "")}</textarea>
+        </div>
+      `;
+    }
+
+    function renderRecordForm(entry){
+      const record = recordForRender(entry);
+      const openAttr = recordHasContent(record, entry.date) ? " open" : "";
+      return `
+        <details class="record-details"${openAttr}>
+          <summary>訪問記録入力</summary>
+          <div class="record-form">
+            <section class="record-section">
+              <div class="record-section-title">実施日・バイタル</div>
+              <div class="record-grid four">
+                ${inputField(record, "visitDate", "実施日", "", "date")}
+                ${fieldGrid(record, VITAL_FIELDS)}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">全体の様子</div>
+              <div class="record-grid">
+                ${fieldGrid(record, OVERVIEW_FIELDS)}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">身体機能</div>
+              <div class="record-grid">
+                ${fieldGrid(record, PHYSICAL_FIELDS)}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">基本動作</div>
+              <div class="record-grid">
+                ${BASIC_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], ASSISTANCE_OPTIONS)).join("")}
+                ${moveCard(record, "basic.indoorMove", "屋内移動")}
+                ${moveCard(record, "basic.outdoorMove", "屋外移動")}
+                ${inputField(record, "basic.gait", "歩行", "例：右立脚期短縮あり", "input", "full")}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">日常生活動作 ADL</div>
+              <div class="record-grid">
+                ${ADL_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], item[2])).join("")}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">介入内容</div>
+              <div class="record-grid">
+                ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
+              </div>
+            </section>
+
+            <section class="record-section">
+              <div class="record-section-title">特記事項</div>
+              <div class="record-grid">
+                ${fieldGrid(record, SPECIAL_FIELDS)}
+              </div>
+            </section>
+          </div>
+        </details>
+      `;
+    }
+
+    function renderDaily(){
+      const dateText = $("selectedDate").value || today();
+      $("selectedDate").value = dateText;
+      const entries = entriesForDate(dateText);
+      const doneCount = entries.filter(e => state.done[e.id]).length;
+      $("dailySummary").textContent = `${dateLabel(dateText)}　予定：${entries.length}件　実施済：${doneCount}件`;
+      if(!entries.length){
+        $("scheduleList").innerHTML = `<div class="empty">この日のリハビリ予定はありません</div>`;
+        return;
+      }
+      $("scheduleList").innerHTML = entries.map(entry => `
+        <article class="card schedule-card" data-entry-id="${escapeAttr(entry.id)}">
+          <div class="schedule-head">
+            <div class="time-box">${escapeHtml(entry.time || "--:--")}</div>
+            <div>
+              <div class="schedule-name">${escapeHtml(entry.userName || "未設定")}</div>
+              <div class="schedule-detail">
+                <span class="chip ${entry.source === "date" ? "blue" : ""}">${entry.source === "date" ? "日付別" : "曜日設定"}</span>
+                <span class="chip">${escapeHtml(entry.duration || "40分")}</span>
+              </div>
+            </div>
+            ${entry.source === "date" ? `<button type="button" class="danger delete-one-day">削除</button>` : `<button type="button" class="secondary open-user-from-entry">設定</button>`}
+          </div>
+          <div class="schedule-body">
+            <div>
+              <label>メモ</label>
+              <div>${escapeHtml(entry.memo || "") || "なし"}</div>
+            </div>
+          </div>
+          <div class="status-toggle">
+            <label><input type="checkbox" class="done-check" ${state.done[entry.id] ? "checked" : ""}> 実施済</label>
+          </div>
+          ${renderRecordForm(entry)}
+        </article>
+      `).join("");
+    }
+
+    function renderWeekly(){
+      const columns = DAYS.map(day => {
+        const items = state.users
+          .filter(user => user.schedule[day.key] && user.schedule[day.key].enabled)
+          .map(user => ({user, schedule:user.schedule[day.key]}))
+          .sort((a,b) => String(a.schedule.time||"").localeCompare(String(b.schedule.time||"")) || a.user.name.localeCompare(b.user.name, "ja"));
+        return `
+          <section class="day-column">
+            <div class="day-head">${day.full}</div>
+            <div class="day-body">
+              ${items.length ? items.map(item => `
+                <div class="mini-item">
+                  <div class="mini-time">${escapeHtml(item.schedule.time || "--:--")}</div>
+                  <div>${escapeHtml(item.user.name)}</div>
+                  <div>${escapeHtml(item.schedule.duration || "40分")}</div>
+                </div>
+              `).join("") : `<div class="mini-item">予定なし</div>`}
+            </div>
+          </section>
+        `;
+      }).join("");
+      $("weeklyGrid").innerHTML = columns;
+      const total = DAYS.reduce((sum, day) => sum + state.users.filter(user => user.schedule[day.key] && user.schedule[day.key].enabled).length, 0);
+      $("weeklySummary").textContent = `曜日別リハビリ予定：${total}件`;
+    }
+
+    function openUserModal(userId){
+      editingUserId = userId || "";
+      const user = editingUserId ? state.users.find(u => u.id === editingUserId) : makeUser("");
+      $("userModalTitle").textContent = editingUserId ? "利用者設定" : "利用者を追加";
+      $("modalUserName").value = editingUserId ? user.name : "";
+      $("deleteArea").classList.toggle("hidden", !editingUserId);
+      $("daySettings").innerHTML = DAYS.map(day => {
+        const s = user.schedule[day.key] || emptySchedule()[day.key];
+        return `
+          <div class="day-setting" data-day="${day.key}">
+            <label class="day-check"><input type="checkbox" class="day-enabled" ${s.enabled ? "checked" : ""}> ${day.full}</label>
+            <div>
+              <label>時間</label>
+              <input type="time" class="day-time" value="${escapeAttr(s.time || "09:00")}">
+            </div>
+            <div>
+              <label>時間数</label>
+              <select class="day-duration">
+                ${["20分","40分","60分"].map(v => `<option value="${v}" ${s.duration === v ? "selected" : ""}>${v}</option>`).join("")}
+              </select>
+            </div>
+            <div class="memo-cell">
+              <label>メモ</label>
+              <textarea class="day-memo">${escapeHtml(s.memo || "")}</textarea>
+            </div>
+          </div>
+        `;
+      }).join("");
+      $("userModal").classList.remove("hidden");
+      setTimeout(() => $("modalUserName").focus(), 0);
+    }
+
+    function collectScheduleFromModal(){
+      const schedule = emptySchedule();
+      document.querySelectorAll(".day-setting").forEach(row => {
+        const key = row.dataset.day;
+        schedule[key] = {
+          enabled:row.querySelector(".day-enabled").checked,
+          time:row.querySelector(".day-time").value || "09:00",
+          duration:row.querySelector(".day-duration").value || "40分",
+          program:DEFAULT_PROGRAMS[key],
+          memo:row.querySelector(".day-memo").value.trim()
+        };
+      });
+      return schedule;
+    }
+
+    function saveUserSettings(){
+      const name = $("modalUserName").value.trim() || "未設定";
+      if(editingUserId){
+        const user = state.users.find(u => u.id === editingUserId);
+        if(!user) return;
+        user.name = name;
+        user.schedule = collectScheduleFromModal();
+      }else{
+        const user = makeUser(name);
+        user.schedule = collectScheduleFromModal();
+        state.users.push(user);
+        editingUserId = user.id;
+      }
+      saveState();
+      closeUserModal();
+      renderUsers();
+      renderDaily();
+      renderWeekly();
+    }
+
+    function closeUserModal(){
+      $("userModal").classList.add("hidden");
+      editingUserId = "";
+    }
+
+    function deleteUser(){
+      if(!editingUserId) return;
+      const user = state.users.find(u => u.id === editingUserId);
+      if(!user) return;
+      if(!confirm(`${user.name} を削除しますか？`)) return;
+      const removedOneDayIds = state.oneDay.filter(item => item.userId === editingUserId).map(item => item.id);
+      state.users = state.users.filter(u => u.id !== editingUserId);
+      state.oneDay = state.oneDay.filter(item => item.userId !== editingUserId);
+      Object.keys(state.done || {}).forEach(id => {
+        if(id.includes(`:${editingUserId}:`) || removedOneDayIds.includes(id)) delete state.done[id];
+      });
+      Object.keys(state.records || {}).forEach(id => {
+        if(id.includes(`:${editingUserId}:`) || removedOneDayIds.includes(id)) delete state.records[id];
+      });
+      saveState();
+      closeUserModal();
+      renderUsers();
+      renderDaily();
+      renderWeekly();
+    }
+
+    function openOneDayModal(){
+      $("oneDayDate").value = $("selectedDate").value || today();
+      $("oneDayUser").innerHTML = state.users.map(user => `<option value="${user.id}">${escapeHtml(user.name)}</option>`).join("");
+      $("oneDayTime").value = "09:00";
+      $("oneDayDuration").value = "40分";
+      $("oneDayMemo").value = "";
+      $("oneDayModal").classList.remove("hidden");
+    }
+
+    function closeOneDayModal(){
+      $("oneDayModal").classList.add("hidden");
+    }
+
+    function saveOneDay(){
+      if(!state.users.length){
+        alert("先に利用者を追加してください。");
+        return;
+      }
+      const user = state.users.find(u => u.id === $("oneDayUser").value);
+      state.oneDay.push({
+        id:"date:" + uid(),
+        date:$("oneDayDate").value || today(),
+        userId:user ? user.id : "",
+        userName:user ? user.name : "未設定",
+        time:$("oneDayTime").value || "09:00",
+        duration:$("oneDayDuration").value || "40分",
+        program:"リハビリ",
+        memo:$("oneDayMemo").value.trim(),
+        enabled:true
+      });
+      $("selectedDate").value = $("oneDayDate").value || today();
+      saveState();
+      closeOneDayModal();
+      renderDaily();
+      renderWeekly();
+    }
+
+    function addLine(lines, labelText, value){
+      if(value !== undefined && value !== null && String(value).trim()){
+        lines.push(`${labelText}：${String(value).trim()}`);
+      }
+    }
+
+    function levelText(record, path, labelText){
+      const level = getPath(record, `${path}.level`);
+      const memo = getPath(record, `${path}.memo`);
+      if(!level && !memo) return "";
+      return `${labelText}：${level || "記載なし"}${memo ? `（${memo}）` : ""}`;
+    }
+
+    function moveText(record, path, labelText){
+      const tools = getPath(record, `${path}.tools`);
+      const memo = getPath(record, `${path}.memo`);
+      const toolText = Array.isArray(tools) && tools.length ? tools.join("・") : "";
+      if(!toolText && !memo) return "";
+      return `${labelText}：${toolText || "記載なし"}${memo ? `（${memo}）` : ""}`;
+    }
+
+    function interventionText(record, path, labelText){
+      const done = getPath(record, `${path}.done`);
+      const note = getPath(record, `${path}.note`);
+      if(!done && !note) return "";
+      return `${labelText}：${done ? "実施" : "未チェック"}${note ? `／${note}` : ""}`;
+    }
+
+    function recordText(record, defaultDate){
+      if(!recordHasContent(record, defaultDate)) return "";
+      const lines = ["【訪問記録】"];
+      addLine(lines, "実施日", record.visitDate);
+      const vitalParts = [];
+      if(record.vitals.sbp) vitalParts.push(`SBP ${record.vitals.sbp}`);
+      if(record.vitals.dbp) vitalParts.push(`DBP ${record.vitals.dbp}`);
+      if(record.vitals.spo2) vitalParts.push(`SpO2 ${record.vitals.spo2}`);
+      if(record.vitals.pr) vitalParts.push(`PR ${record.vitals.pr}`);
+      if(vitalParts.length) lines.push(`バイタル：${vitalParts.join(" / ")}`);
+
+      const overview = [];
+      OVERVIEW_FIELDS.forEach(field => {
+        const value = getPath(record, field[0]);
+        if(value) overview.push(`${field[1]}：${value}`);
+      });
+      if(overview.length) lines.push("全体の様子：" + overview.join("、"));
+
+      PHYSICAL_FIELDS.forEach(field => addLine(lines, field[1], getPath(record, field[0])));
+
+      const basicLines = [
+        ...BASIC_ACTIONS.map(item => levelText(record, item[0], item[1])),
+        moveText(record, "basic.indoorMove", "屋内移動"),
+        moveText(record, "basic.outdoorMove", "屋外移動")
+      ].filter(Boolean);
+      if(record.basic.gait) basicLines.push(`歩行：${record.basic.gait}`);
+      if(basicLines.length) lines.push("基本動作：" + basicLines.join("、"));
+
+      const adlLines = ADL_ACTIONS.map(item => levelText(record, item[0], item[1])).filter(Boolean);
+      if(adlLines.length) lines.push("ADL：" + adlLines.join("、"));
+
+      const interventionLines = INTERVENTIONS.map(item => interventionText(record, item[0], item[1])).filter(Boolean);
+      if(interventionLines.length) lines.push("介入内容：" + interventionLines.join("、"));
+
+      SPECIAL_FIELDS.forEach(field => addLine(lines, field[1], getPath(record, field[0])));
+      return lines.join("\n");
+    }
+
+    function dailyText(){
+      const dateText = $("selectedDate").value || today();
+      const entries = entriesForDate(dateText);
+      const lines = [`【日別リハビリ予定】`, `日付：${dateLabel(dateText)}`, `予定：${entries.length}件`, ""];
+      entries.forEach(entry => {
+        lines.push(`${entry.time || "--:--"}　${entry.userName || "未設定"}　${entry.duration || "40分"}`);
+        if(entry.memo) lines.push(`メモ：${entry.memo}`);
+        lines.push(`状態：${state.done[entry.id] ? "実施済" : "未実施"}`, "");
+        const record = state.records && state.records[entry.id] ? mergeRecord(emptyRecord(entry.date), state.records[entry.id]) : null;
+        const text = record ? recordText(record, entry.date) : "";
+        if(text) lines.push(text, "");
+      });
+      return lines.join("\n").trim();
+    }
+
+    function cleanText(value){
+      return String(value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function shortDate(dateText){
+      const [, month, day] = String(dateText || "").split("-");
+      if(!month || !day) return dateText || "";
+      return `${Number(month)}/${Number(day)}`;
+    }
+
+    function pushFieldParts(parts, record, fields){
+      fields.forEach(field => {
+        const value = cleanText(getPath(record, field[0]));
+        if(value) parts.push(`${field[1]}：${value}`);
+      });
+    }
+
+    function compactLevelPart(record, path, labelText){
+      const value = levelText(record, path, labelText);
+      return value ? value.replace(/（記載なし）/g, "") : "";
+    }
+
+    function compactMovePart(record, path, labelText){
+      const value = moveText(record, path, labelText);
+      return value ? value.replace(/（記載なし）/g, "") : "";
+    }
+
+    function visitMemoText(entry, record){
+      const parts = [];
+      if(entry.memo) parts.push(`予定メモ：${cleanText(entry.memo)}`);
+      parts.push(`実施状況：${state.done[entry.id] ? "実施済" : "未実施"}`);
+      if(!record) return parts.join("。") || "記録なし";
+
+      pushFieldParts(parts, record, OVERVIEW_FIELDS);
+      pushFieldParts(parts, record, PHYSICAL_FIELDS);
+
+      const basicParts = [
+        ...BASIC_ACTIONS.map(item => compactLevelPart(record, item[0], item[1])),
+        compactMovePart(record, "basic.indoorMove", "屋内移動"),
+        compactMovePart(record, "basic.outdoorMove", "屋外移動")
+      ].filter(Boolean);
+      if(record.basic.gait) basicParts.push(`歩行：${cleanText(record.basic.gait)}`);
+      if(basicParts.length) parts.push(`基本動作：${basicParts.join("、")}`);
+
+      const adlParts = ADL_ACTIONS.map(item => compactLevelPart(record, item[0], item[1])).filter(Boolean);
+      if(adlParts.length) parts.push(`ADL：${adlParts.join("、")}`);
+
+      const interventionParts = INTERVENTIONS.map(item => interventionText(record, item[0], item[1])).filter(Boolean);
+      if(interventionParts.length) parts.push(`介入内容：${interventionParts.join("、")}`);
+
+      pushFieldParts(parts, record, SPECIAL_FIELDS);
+      return parts.join("。") || "記録なし";
+    }
+
+    function lmStudioPromptText(){
+      return [
+        "【LM Studio用指示】",
+        "以下の【今月の訪問記録】をもとに、既存報告書の文体・項目順に照らし合わせて月次報告書へ書き換えてください。",
+        "既存報告書に記載があり、今月の記録で明確な変化がない項目は既存表現を優先してください。",
+        "今月の記録から改善・悪化・変更が読み取れる項目のみ更新してください。",
+        "記録にない内容は推測せず、必要時は「記録なし」としてください。",
+        "出力は報告書本文のみとし、見出し・箇条書き・Markdown記号は使わないでください。",
+        "",
+        "【既存報告書】",
+        "ここに既存の報告書本文を貼り付け",
+        "",
+        "【今月の訪問記録】"
+      ].join("\n");
+    }
+
+    function lmStudioUserBlock(userName, monthText, items){
+      const sorted = [...items].sort((a,b) => a.dateText.localeCompare(b.dateText) || String(a.entry.time||"").localeCompare(String(b.entry.time||"")));
+      const lines = [
+        `【利用者】${userName}`,
+        `【対象月】${monthLabel(monthText)}`,
+        `【訪問回数】${sorted.length}回`,
+        ""
+      ];
+
+      sorted.forEach((item, index) => {
+        const record = item.record;
+        lines.push(`■ 第${index + 1}回訪問（${shortDate(item.dateText)}）`);
+        lines.push(`SBP：${record ? cleanText(getPath(record, "vitals.sbp")) : ""}`);
+        lines.push(`DBP：${record ? cleanText(getPath(record, "vitals.dbp")) : ""}`);
+        lines.push(`SpO2：${record ? cleanText(getPath(record, "vitals.spo2")) : ""}`);
+        lines.push(`PR：${record ? cleanText(getPath(record, "vitals.pr")) : ""}`);
+        lines.push(`様子：${visitMemoText(item.entry, record)}`);
+        lines.push("");
+      });
+
+      return lines.join("\n").trim();
+    }
+
+    function reportText(){
+      const monthText = $("reportMonth").value || today().slice(0,7);
+      const rows = [];
+      datesInMonth(monthText).forEach(dateText => {
+        entriesForDate(dateText).forEach(entry => {
+          const record = state.records && state.records[entry.id] ? mergeRecord(emptyRecord(entry.date), state.records[entry.id]) : null;
+          const text = record ? recordText(record, entry.date) : "";
+          if(text || state.done[entry.id] || entry.memo){
+            rows.push({dateText, entry, record:text ? record : null});
+          }
+        });
+      });
+
+      const lines = ["【LM Studio・既存報告書照合用出力】", `対象月：${monthLabel(monthText)}`, `対象記録：${rows.length}件`, ""];
+      if(!rows.length){
+        lines.push("出力対象の記録はありません。");
+        return lines.join("\n").trim();
+      }
+
+      const grouped = new Map();
+      rows.forEach(row => {
+        const key = row.entry.userName || "未設定";
+        if(!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(row);
+      });
+
+      Array.from(grouped.entries())
+        .sort((a,b) => a[0].localeCompare(b[0], "ja"))
+        .forEach(([userName, items]) => {
+          lines.push(lmStudioPromptText());
+          lines.push(lmStudioUserBlock(userName, monthText, items));
+          lines.push("──────────────────────────────", "");
+        });
+
+      return lines.join("\n").trim();
+    }
+
+    function weeklyText(){
+      const lines = ["【曜日別リハビリ予定】", ""];
+      DAYS.forEach(day => {
+        lines.push(`[${day.full}]`);
+        const items = state.users
+          .filter(user => user.schedule[day.key] && user.schedule[day.key].enabled)
+          .map(user => ({user, schedule:user.schedule[day.key]}))
+          .sort((a,b) => String(a.schedule.time||"").localeCompare(String(b.schedule.time||"")));
+        if(!items.length) lines.push("予定なし");
+        items.forEach(item => lines.push(`${item.schedule.time}　${item.user.name}　${item.schedule.duration}`));
+        lines.push("");
+      });
+      return lines.join("\n").trim();
+    }
+
+    async function copyText(text){
+      const value = String(text || "");
+      let ok = false;
+      try{
+        $("copyBuffer").value = value;
+        $("copyBuffer").style.position = "fixed";
+        $("copyBuffer").style.left = "0";
+        $("copyBuffer").style.top = "0";
+        $("copyBuffer").select();
+        ok = document.execCommand("copy");
+      }catch(e){ok = false}
+      $("copyBuffer").style.position = "absolute";
+      $("copyBuffer").style.left = "-9999px";
+      if(!ok && navigator.clipboard && window.isSecureContext){
+        try{await navigator.clipboard.writeText(value); ok = true}catch(e){ok = false}
+      }
+      if(ok) alert("コピーしました。");
+      else alert("コピーできませんでした。画面下の内容を手動でコピーしてください。");
+    }
+
+    function exportData(){
+      const data = {
+        app:"houmon_rehab_schedule",
+        version:1,
+        exportedAt:new Date().toISOString(),
+        ...state
+      };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `houmon_rehab_schedule_${today().replaceAll("-","")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const data = JSON.parse(reader.result);
+          state = {
+            users:Array.isArray(data.users) ? data.users.map(normalizeUser) : [],
+            oneDay:Array.isArray(data.oneDay) ? data.oneDay : [],
+            done:data.done && typeof data.done === "object" ? data.done : {},
+            records:normalizeRecords(data.records)
+          };
+          saveState();
+          renderUsers();
+          renderDaily();
+          renderWeekly();
+          alert("復元しました。");
+        }catch(e){
+          alert("復元できませんでした。");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(value){
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function escapeAttr(value){
+      return escapeHtml(value);
+    }
+
+    function entryById(id){
+      return entriesForDate($("selectedDate").value || today()).find(entry => entry.id === id);
+    }
+
+    function handleRecordInput(target){
+      const card = target.closest("[data-entry-id]");
+      if(!card) return false;
+      const entry = entryById(card.dataset.entryId);
+      if(!entry) return false;
+      const record = ensureRecord(entry);
+      const field = target.dataset.recordField;
+      if(field){
+        setPath(record, field, target.value);
+        saveState();
+        return true;
+      }
+      const radio = target.dataset.recordRadio;
+      if(radio){
+        setPath(record, radio, target.value);
+        saveState();
+        return true;
+      }
+      const check = target.dataset.recordCheck;
+      if(check){
+        setPath(record, check, target.checked);
+        saveState();
+        return true;
+      }
+      const tool = target.dataset.recordTool;
+      if(tool){
+        const current = getPath(record, tool);
+        const tools = Array.isArray(current) ? [...current] : [];
+        const index = tools.indexOf(target.value);
+        if(target.checked && index === -1) tools.push(target.value);
+        if(!target.checked && index !== -1) tools.splice(index, 1);
+        setPath(record, tool, tools);
+        saveState();
+        return true;
+      }
+      return false;
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => showScreen(btn.dataset.screen)));
+    $("selectedDate").value = today();
+    $("reportMonth").value = today().slice(0,7);
+    $("todayBtn").addEventListener("click", () => {$("selectedDate").value = today(); renderDaily()});
+    $("selectedDate").addEventListener("change", renderDaily);
+    $("reportMonth").addEventListener("change", () => {
+      const month = $("reportMonth").value;
+      if(month && !$("selectedDate").value.startsWith(month)){
+        $("selectedDate").value = `${month}-01`;
+        renderDaily();
+      }
+    });
+    $("addUserBtn").addEventListener("click", () => openUserModal(""));
+    $("userSearch").addEventListener("input", renderUsers);
+    $("saveUserSettingsBtn").addEventListener("click", saveUserSettings);
+    $("closeUserModalBtn").addEventListener("click", closeUserModal);
+    $("deleteUserBtn").addEventListener("click", deleteUser);
+    $("userModal").addEventListener("click", e => {if(e.target.id === "userModal") closeUserModal()});
+    $("addOneDayBtn").addEventListener("click", openOneDayModal);
+    $("closeOneDayBtn").addEventListener("click", closeOneDayModal);
+    $("saveOneDayBtn").addEventListener("click", saveOneDay);
+    $("oneDayModal").addEventListener("click", e => {if(e.target.id === "oneDayModal") closeOneDayModal()});
+    $("copyDailyBtn").addEventListener("click", () => copyText(dailyText()));
+    $("copyReportBtn").addEventListener("click", () => copyText(reportText()));
+    $("copyWeeklyBtn").addEventListener("click", () => copyText(weeklyText()));
+    $("exportBtn").addEventListener("click", exportData);
+    $("importBtn").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if(file) importData(file);
+      e.target.value = "";
+    });
+
+    $("userList").addEventListener("change", e => {
+      const input = e.target.closest(".user-name");
+      if(!input) return;
+      const row = input.closest("[data-user-id]");
+      const user = state.users.find(u => u.id === row.dataset.userId);
+      if(!user) return;
+      user.name = input.value.trim() || "未設定";
+      saveState();
+      renderUsers();
+      renderDaily();
+      renderWeekly();
+    });
+
+    $("userList").addEventListener("input", e => {
+      const input = e.target.closest(".user-name");
+      if(!input) return;
+      const row = input.closest("[data-user-id]");
+      const user = state.users.find(u => u.id === row.dataset.userId);
+      if(!user) return;
+      user.name = input.value.trim() || "未設定";
+      saveState();
+    });
+
+    $("userList").addEventListener("click", e => {
+      const settings = e.target.closest(".open-settings");
+      if(!settings) return;
+      const row = settings.closest("[data-user-id]");
+      openUserModal(row.dataset.userId);
+    });
+
+    $("scheduleList").addEventListener("change", e => {
+      if(handleRecordInput(e.target)) return;
+      const check = e.target.closest(".done-check");
+      if(!check) return;
+      const card = check.closest("[data-entry-id]");
+      state.done[card.dataset.entryId] = check.checked;
+      saveState();
+      renderDaily();
+    });
+
+    $("scheduleList").addEventListener("input", e => {
+      handleRecordInput(e.target);
+    });
+
+    $("scheduleList").addEventListener("click", e => {
+      const card = e.target.closest("[data-entry-id]");
+      if(!card) return;
+      const id = card.dataset.entryId;
+      if(e.target.closest(".delete-one-day")){
+        state.oneDay = state.oneDay.filter(item => item.id !== id);
+        delete state.done[id];
+        if(state.records) delete state.records[id];
+        saveState();
+        renderDaily();
+      }
+      if(e.target.closest(".open-user-from-entry")){
+        const entry = entryById(id);
+        if(entry) openUserModal(entry.userId);
+      }
+    });
+
+    renderUsers();
+    renderDaily();
+    renderWeekly();
+  </script>
+</body>
+</html>
