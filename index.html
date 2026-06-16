@@ -264,7 +264,7 @@
 
     .report-grid{
       display:grid;
-      grid-template-columns:1fr auto;
+      grid-template-columns:1fr minmax(180px,.7fr) auto;
       gap:9px;
       align-items:center;
       width:100%;
@@ -324,8 +324,32 @@
     }
 
     .record-details summary::-webkit-details-marker{display:none}
-    .record-details summary::before{content:"▼";color:#6aa66e;font-size:14px}
-    .record-details:not([open]) summary::before{content:"▶"}
+    .record-toggle{
+      width:32px;
+      height:32px;
+      border:1px solid #cfe3d5;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      color:#2f7d46;
+      background:#fff;
+      box-shadow:0 4px 10px rgba(47,125,70,.1);
+    }
+    .record-toggle::before{content:"▼";font-size:14px;line-height:1}
+    .record-details:not([open]) .record-toggle::before{content:"▶"}
+    .record-summary-text{flex:1 1 auto;min-width:0}
+    .record-status{
+      flex:0 0 auto;
+      padding:4px 8px;
+      border-radius:999px;
+      color:#376146;
+      background:#fff;
+      border:1px solid #d9eadf;
+      font-size:12px;
+      font-weight:900;
+    }
 
     .record-form{
       padding:13px;
@@ -935,6 +959,9 @@
       <div class="toolbar">
         <div class="report-grid">
           <input type="month" id="reportMonth">
+          <select id="reportUser">
+            <option value="">全利用者</option>
+          </select>
           <button type="button" id="copyReportBtn">報告書用出力</button>
         </div>
       </div>
@@ -1311,6 +1338,7 @@
         .sort((a,b) => a.name.localeCompare(b.name, "ja"));
       $("userCount").textContent = state.users.length;
       $("userSummary").textContent = `利用者：${state.users.length}名`;
+      renderReportUsers();
       if(!list.length){
         $("userList").innerHTML = `<div class="empty">利用者がありません</div>`;
         return;
@@ -1330,6 +1358,18 @@
           </div>
         </article>
       `).join("");
+    }
+
+    function renderReportUsers(){
+      const select = $("reportUser");
+      if(!select) return;
+      const current = select.value;
+      const options = [`<option value="">全利用者</option>`]
+        .concat([...state.users]
+          .sort((a,b) => a.name.localeCompare(b.name, "ja"))
+          .map(user => `<option value="${escapeAttr(user.id)}">${escapeHtml(user.name)}</option>`));
+      select.innerHTML = options.join("");
+      select.value = state.users.some(user => user.id === current) ? current : "";
     }
 
     function entriesForDate(dateText){
@@ -1453,10 +1493,10 @@
 
     function renderRecordForm(entry){
       const record = recordForRender(entry);
-      const openAttr = recordHasContent(record, entry.date) ? " open" : "";
+      const hasContent = recordHasContent(record, entry.date);
       return `
-        <details class="record-details"${openAttr}>
-          <summary>訪問記録入力</summary>
+        <details class="record-details">
+          <summary><span class="record-toggle" aria-hidden="true"></span><span class="record-summary-text">訪問記録入力</span><span class="record-status">${hasContent ? "入力あり" : "未入力"}</span></summary>
           <div class="record-form">
             <section class="record-section">
               <div class="record-section-title">実施日・バイタル</div>
@@ -1878,11 +1918,13 @@
       return lines.join("\n").trim();
     }
 
-    function reportText(){
+    function reportText(selectedUserId=""){
       const monthText = $("reportMonth").value || today().slice(0,7);
+      const selectedUser = selectedUserId ? state.users.find(user => user.id === selectedUserId) : null;
       const rows = [];
       datesInMonth(monthText).forEach(dateText => {
         entriesForDate(dateText).forEach(entry => {
+          if(selectedUserId && entry.userId !== selectedUserId) return;
           const record = state.records && state.records[entry.id] ? mergeRecord(emptyRecord(entry.date), state.records[entry.id]) : null;
           const text = record ? recordText(record, entry.date) : "";
           if(text || state.done[entry.id] || entry.memo){
@@ -1891,7 +1933,13 @@
         });
       });
 
-      const lines = ["【LM Studio・既存報告書照合用出力】", `対象月：${monthLabel(monthText)}`, `対象記録：${rows.length}件`, ""];
+      const lines = [
+        "【LM Studio・既存報告書照合用出力】",
+        `対象月：${monthLabel(monthText)}`,
+        `対象利用者：${selectedUser ? selectedUser.name : "全利用者"}`,
+        `対象記録：${rows.length}件`,
+        ""
+      ];
       if(!rows.length){
         lines.push("出力対象の記録はありません。");
         return lines.join("\n").trim();
@@ -1899,14 +1947,19 @@
 
       const grouped = new Map();
       rows.forEach(row => {
-        const key = row.entry.userName || "未設定";
+        const key = row.entry.userId || row.entry.userName || "未設定";
         if(!grouped.has(key)) grouped.set(key, []);
         grouped.get(key).push(row);
       });
 
       Array.from(grouped.entries())
-        .sort((a,b) => a[0].localeCompare(b[0], "ja"))
-        .forEach(([userName, items]) => {
+        .sort((a,b) => {
+          const nameA = a[1][0] && a[1][0].entry.userName ? a[1][0].entry.userName : a[0];
+          const nameB = b[1][0] && b[1][0].entry.userName ? b[1][0].entry.userName : b[0];
+          return nameA.localeCompare(nameB, "ja");
+        })
+        .forEach(([, items]) => {
+          const userName = items[0] && items[0].entry.userName ? items[0].entry.userName : "未設定";
           lines.push(lmStudioPromptText());
           lines.push(lmStudioUserBlock(userName, monthText, items));
           lines.push("──────────────────────────────", "");
@@ -2008,6 +2061,11 @@
       return entriesForDate($("selectedDate").value || today()).find(entry => entry.id === id);
     }
 
+    function updateRecordStatus(card, record, defaultDate){
+      const status = card.querySelector(".record-status");
+      if(status) status.textContent = recordHasContent(record, defaultDate) ? "入力あり" : "未入力";
+    }
+
     function handleRecordInput(target){
       const card = target.closest("[data-entry-id]");
       if(!card) return false;
@@ -2018,18 +2076,21 @@
       if(field){
         setPath(record, field, target.value);
         saveState();
+        updateRecordStatus(card, record, entry.date);
         return true;
       }
       const radio = target.dataset.recordRadio;
       if(radio){
         setPath(record, radio, target.value);
         saveState();
+        updateRecordStatus(card, record, entry.date);
         return true;
       }
       const check = target.dataset.recordCheck;
       if(check){
         setPath(record, check, target.checked);
         saveState();
+        updateRecordStatus(card, record, entry.date);
         return true;
       }
       const tool = target.dataset.recordTool;
@@ -2041,6 +2102,7 @@
         if(!target.checked && index !== -1) tools.splice(index, 1);
         setPath(record, tool, tools);
         saveState();
+        updateRecordStatus(card, record, entry.date);
         return true;
       }
       return false;
@@ -2069,7 +2131,7 @@
     $("saveOneDayBtn").addEventListener("click", saveOneDay);
     $("oneDayModal").addEventListener("click", e => {if(e.target.id === "oneDayModal") closeOneDayModal()});
     $("copyDailyBtn").addEventListener("click", () => copyText(dailyText()));
-    $("copyReportBtn").addEventListener("click", () => copyText(reportText()));
+    $("copyReportBtn").addEventListener("click", () => copyText(reportText($("reportUser").value)));
     $("copyWeeklyBtn").addEventListener("click", () => copyText(weeklyText()));
     $("exportBtn").addEventListener("click", exportData);
     $("importBtn").addEventListener("click", () => $("importFile").click());
