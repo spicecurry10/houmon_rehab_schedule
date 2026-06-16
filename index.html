@@ -302,7 +302,7 @@
       padding-top:11px;
     }
 
-    .record-details{
+    .record-panel{
       margin-top:12px;
       border:1px solid #dbeadf;
       border-radius:18px;
@@ -310,32 +310,69 @@
       overflow:hidden;
     }
 
+    .record-panel-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 14px;
+      color:var(--green-dark);
+      background:linear-gradient(180deg,#f8fcf9,#eef8f1);
+      font-size:17px;
+      font-weight:900;
+      border-bottom:1px solid #e7f0ea;
+    }
+
+    .record-vitals{
+      padding:13px;
+      background:#fff;
+      border-bottom:1px solid #e7f0ea;
+    }
+
+    .record-vital-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .record-overview-single{
+      margin-top:10px;
+    }
+
+    .record-overview-single .record-grid{
+      padding:0;
+    }
+
+    .record-details{
+      border-bottom:1px solid #e7f0ea;
+      background:#fff;
+    }
+
+    .record-details:last-child{border-bottom:none}
+
     .record-details summary{
       display:flex;
       align-items:center;
       gap:8px;
+      min-height:68px;
       padding:12px 14px;
       color:var(--green-dark);
-      font-size:17px;
+      font-size:22px;
       font-weight:900;
       cursor:pointer;
       list-style:none;
-      background:linear-gradient(180deg,#f8fcf9,#eef8f1);
+      background:#fff;
     }
 
     .record-details summary::-webkit-details-marker{display:none}
     .record-toggle{
-      width:32px;
-      height:32px;
-      border:1px solid #cfe3d5;
-      border-radius:999px;
+      width:28px;
+      height:28px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
       flex:0 0 auto;
-      color:#2f7d46;
-      background:#fff;
-      box-shadow:0 4px 10px rgba(47,125,70,.1);
+      color:#65ad75;
     }
     .record-toggle::before{content:"▼";font-size:14px;line-height:1}
     .record-details:not([open]) .record-toggle::before{content:"▶"}
@@ -351,10 +388,7 @@
       font-weight:900;
     }
 
-    .record-form{
-      padding:13px;
-      border-top:1px solid #e7f0ea;
-    }
+    .record-section-body{border-top:1px solid #edf3ee}
 
     .record-section{
       margin-bottom:16px;
@@ -579,6 +613,7 @@
       .schedule-head{grid-template-columns:78px 1fr}
       .schedule-head button{grid-column:1 / -1}
       .schedule-body{grid-template-columns:1fr}
+      .record-vital-grid{grid-template-columns:1fr 1fr}
       .record-grid,.record-grid.four{grid-template-columns:1fr}
       .week-grid{grid-template-columns:1fr}
       .form-grid{grid-template-columns:1fr}
@@ -778,18 +813,28 @@
         font-size:13px;
       }
 
-      .record-details{
+      .record-panel{
         margin-top:9px;
         border-radius:13px;
       }
 
-      .record-details summary{
+      .record-panel-head{
         padding:10px 11px;
         font-size:15px;
       }
 
-      .record-form{
+      .record-vitals{
         padding:9px;
+      }
+
+      .record-overview-single{
+        margin-top:8px;
+      }
+
+      .record-details summary{
+        padding:10px 11px;
+        min-height:56px;
+        font-size:20px;
       }
 
       .record-section{
@@ -1198,7 +1243,7 @@
       return {
         visitDate:dateText || today(),
         vitals:{sbp:"", dbp:"", spo2:"", pr:""},
-        overview:{expression:"", fatigue:"", painComplaint:"", speech:""},
+        overview:{general:"", expression:"", fatigue:"", painComplaint:"", speech:""},
         physical:{
           cardiopulmonary:"",
           skin:"",
@@ -1419,7 +1464,9 @@
 
     function recordHasContent(record, defaultDate){
       const base = emptyRecord(defaultDate || today());
-      return JSON.stringify(mergeRecord(base, record)) !== JSON.stringify(base);
+      const normalized = mergeRecord(base, record);
+      normalized.overview = {...base.overview, general:normalized.overview.general || ""};
+      return JSON.stringify(normalized) !== JSON.stringify(base);
     }
 
     function inputField(record, path, labelText, placeholder="", kind="input", extraClass=""){
@@ -1491,67 +1538,64 @@
       `;
     }
 
+    function recordDetailsSection(title, innerHtml){
+      return `
+        <details class="record-details">
+          <summary><span class="record-toggle" aria-hidden="true"></span><span class="record-summary-text">${escapeHtml(title)}</span></summary>
+          <div class="record-section-body">
+            ${innerHtml}
+          </div>
+        </details>
+      `;
+    }
+
     function renderRecordForm(entry){
       const record = recordForRender(entry);
       const hasContent = recordHasContent(record, entry.date);
       return `
-        <details class="record-details">
-          <summary><span class="record-toggle" aria-hidden="true"></span><span class="record-summary-text">訪問記録入力</span><span class="record-status">${hasContent ? "入力あり" : "未入力"}</span></summary>
-          <div class="record-form">
-            <section class="record-section">
-              <div class="record-section-title">実施日・バイタル</div>
-              <div class="record-grid four">
-                ${inputField(record, "visitDate", "実施日", "", "date")}
-                ${fieldGrid(record, VITAL_FIELDS)}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">全体の様子</div>
-              <div class="record-grid">
-                ${fieldGrid(record, OVERVIEW_FIELDS)}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">身体機能</div>
-              <div class="record-grid">
-                ${fieldGrid(record, PHYSICAL_FIELDS)}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">基本動作</div>
-              <div class="record-grid">
-                ${BASIC_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], ASSISTANCE_OPTIONS)).join("")}
-                ${moveCard(record, "basic.indoorMove", "屋内移動")}
-                ${moveCard(record, "basic.outdoorMove", "屋外移動")}
-                ${inputField(record, "basic.gait", "歩行", "例：右立脚期短縮あり", "input", "full")}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">日常生活動作 ADL</div>
-              <div class="record-grid">
-                ${ADL_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], item[2])).join("")}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">介入内容</div>
-              <div class="record-grid">
-                ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
-              </div>
-            </section>
-
-            <section class="record-section">
-              <div class="record-section-title">特記事項</div>
-              <div class="record-grid">
-                ${fieldGrid(record, SPECIAL_FIELDS)}
-              </div>
-            </section>
+        <div class="record-panel">
+          <div class="record-panel-head">
+            <span>訪問記録入力</span>
+            <span class="record-status">${hasContent ? "入力あり" : "未入力"}</span>
           </div>
-        </details>
+          <div class="record-vitals">
+            <input type="hidden" data-record-field="visitDate" value="${escapeAttr(record.visitDate || entry.date)}">
+            <div class="record-vital-grid">
+              ${fieldGrid(record, VITAL_FIELDS)}
+            </div>
+            <div class="record-overview-single">
+              ${inputField(record, "overview.general", "全体の様子", "例：表情穏やか。疲労感は軽度。", "textarea", "full")}
+            </div>
+          </div>
+          ${recordDetailsSection("身体機能", `
+            <div class="record-grid">
+              ${fieldGrid(record, PHYSICAL_FIELDS)}
+            </div>
+          `)}
+          ${recordDetailsSection("基本動作", `
+            <div class="record-grid">
+              ${BASIC_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], ASSISTANCE_OPTIONS)).join("")}
+              ${moveCard(record, "basic.indoorMove", "屋内移動")}
+              ${moveCard(record, "basic.outdoorMove", "屋外移動")}
+              ${inputField(record, "basic.gait", "歩行", "例：右立脚期短縮あり", "input", "full")}
+            </div>
+          `)}
+          ${recordDetailsSection("日常生活動作 ADL", `
+            <div class="record-grid">
+              ${ADL_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], item[2])).join("")}
+            </div>
+          `)}
+          ${recordDetailsSection("介入内容", `
+            <div class="record-grid">
+              ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
+            </div>
+          `)}
+          ${recordDetailsSection("特記事項", `
+            <div class="record-grid">
+              ${fieldGrid(record, SPECIAL_FIELDS)}
+            </div>
+          `)}
+        </div>
       `;
     }
 
@@ -1783,12 +1827,7 @@
       if(record.vitals.pr) vitalParts.push(`PR ${record.vitals.pr}`);
       if(vitalParts.length) lines.push(`バイタル：${vitalParts.join(" / ")}`);
 
-      const overview = [];
-      OVERVIEW_FIELDS.forEach(field => {
-        const value = getPath(record, field[0]);
-        if(value) overview.push(`${field[1]}：${value}`);
-      });
-      if(overview.length) lines.push("全体の様子：" + overview.join("、"));
+      addLine(lines, "全体の様子", getPath(record, "overview.general"));
 
       PHYSICAL_FIELDS.forEach(field => addLine(lines, field[1], getPath(record, field[0])));
 
@@ -1858,7 +1897,9 @@
       parts.push(`実施状況：${state.done[entry.id] ? "実施済" : "未実施"}`);
       if(!record) return parts.join("。") || "記録なし";
 
-      pushFieldParts(parts, record, OVERVIEW_FIELDS);
+      const overviewGeneral = cleanText(getPath(record, "overview.general"));
+      if(overviewGeneral) parts.push(`全体の様子：${overviewGeneral}`);
+
       pushFieldParts(parts, record, PHYSICAL_FIELDS);
 
       const basicParts = [
