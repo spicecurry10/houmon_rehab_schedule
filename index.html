@@ -193,6 +193,30 @@
       box-shadow:var(--shadow-soft);
     }
 
+    .copy-actions{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      gap:9px;
+    }
+
+    .copy-option{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      color:#34483c;
+      white-space:nowrap;
+    }
+
+    .copy-option input{
+      width:18px;
+      min-height:18px;
+      margin:0;
+      accent-color:var(--green);
+    }
+
     .count-badge{
       min-width:48px;
       padding:7px 13px;
@@ -1028,7 +1052,13 @@
       </div>
       <div class="summary-bar">
         <span id="dailySummary">予定：0件</span>
-        <button type="button" id="copyDailyBtn" class="secondary">日別コピー</button>
+        <div class="copy-actions">
+          <label class="copy-option">
+            <input type="checkbox" id="omitBlankDailyCopy" checked>
+            空欄をコピーしない
+          </label>
+          <button type="button" id="copyDailyBtn" class="secondary">日別一括コピー</button>
+        </div>
       </div>
       <div id="scheduleList" class="schedule-list"></div>
     </section>
@@ -1858,10 +1888,27 @@
       return lines.join("\n");
     }
 
+    function dailyEntryHasContent(entry){
+      if(state.done[entry.id] || cleanText(entry.memo)) return true;
+      const savedRecord = state.records && state.records[entry.id];
+      return !!savedRecord && recordHasContent(savedRecord, entry.date);
+    }
+
     function dailyText(){
       const dateText = $("selectedDate").value || today();
-      const entries = entriesForDate(dateText);
-      const lines = [`【日別リハビリ予定】`, `日付：${dateLabel(dateText)}`, `予定：${entries.length}件`, ""];
+      const allEntries = entriesForDate(dateText);
+      const omitBlank = $("omitBlankDailyCopy").checked;
+      const entries = omitBlank ? allEntries.filter(dailyEntryHasContent) : allEntries;
+      const lines = [
+        "【日別リハビリ予定】",
+        `日付：${dateLabel(dateText)}`,
+        `出力：${entries.length}件`,
+        ""
+      ];
+      if(!entries.length){
+        lines.push("出力対象の記録はありません。");
+        return lines.join("\n").trim();
+      }
       entries.forEach(entry => {
         lines.push(`${entry.time || "--:--"}　${entry.userName || "未設定"}　${entry.duration || "40分"}`);
         if(entry.memo) lines.push(`メモ：${entry.memo}`);
