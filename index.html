@@ -1589,9 +1589,10 @@
     }
 
     function recordDetailsSection(title, innerHtml, className = ""){
+      const colorStyle = className === "intervention-details" ? ` style="color:#ff00ff!important"` : "";
       return `
         <details class="record-details ${escapeAttr(className)}">
-          <summary><span class="record-toggle" aria-hidden="true"></span><span class="record-summary-text">${escapeHtml(title)}</span></summary>
+          <summary${colorStyle}><span class="record-toggle" aria-hidden="true"${colorStyle}></span><span class="record-summary-text">${escapeHtml(title)}</span></summary>
           <div class="record-section-body">
             ${innerHtml}
           </div>
@@ -1662,7 +1663,7 @@
       $("scheduleList").innerHTML = entries.map(entry => `
         <article class="card schedule-card" data-entry-id="${escapeAttr(entry.id)}">
           <div class="schedule-head">
-            <div class="time-box">${escapeHtml(entry.time || "--:--")}</div>
+            <div class="time-box" style="color:#003f3f!important;background:#00ffff!important">${escapeHtml(entry.time || "--:--")}</div>
             <div>
               <div class="schedule-name">${escapeHtml(entry.userName || "未設定")}</div>
               <div class="schedule-detail">
