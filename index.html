@@ -318,8 +318,8 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      color:#fff;
-      background:linear-gradient(180deg,#2f7d46,#1f5d34);
+      color:#003f3f;
+      background:#00ffff;
       font-size:19px;
       font-weight:900;
       letter-spacing:.02em;
@@ -410,6 +410,10 @@
     .record-toggle::before{content:"▼";font-size:12px;line-height:1}
     .record-details:not([open]) .record-toggle::before{content:"▶"}
     .record-summary-text{flex:1 1 auto;min-width:0}
+    .record-details.intervention-details summary,
+    .record-details.intervention-details .record-toggle{
+      color:#ff00ff;
+    }
     .record-status{
       flex:0 0 auto;
       padding:4px 8px;
@@ -1014,14 +1018,14 @@
 
   <nav class="tabs" aria-label="画面切替">
     <div class="tab-inner">
-      <button type="button" class="tab-btn active" data-screen="users">利用者</button>
-      <button type="button" class="tab-btn" data-screen="daily">日別予定</button>
+      <button type="button" class="tab-btn" data-screen="users">利用者</button>
+      <button type="button" class="tab-btn active" data-screen="daily">日別予定</button>
       <button type="button" class="tab-btn" data-screen="weekly">曜日別</button>
     </div>
   </nav>
 
   <main>
-    <section id="usersScreen" class="screen active">
+    <section id="usersScreen" class="screen">
       <div class="toolbar">
         <button type="button" id="addUserBtn">＋ 利用者を追加</button>
         <input type="search" id="userSearch" class="grow" placeholder="利用者検索">
@@ -1033,7 +1037,7 @@
       <div id="userList" class="user-list"></div>
     </section>
 
-    <section id="dailyScreen" class="screen">
+    <section id="dailyScreen" class="screen active">
       <div class="toolbar">
         <div class="report-grid">
           <input type="month" id="reportMonth">
@@ -1577,9 +1581,9 @@
       `;
     }
 
-    function recordDetailsSection(title, innerHtml){
+    function recordDetailsSection(title, innerHtml, className = ""){
       return `
-        <details class="record-details">
+        <details class="record-details ${escapeAttr(className)}">
           <summary><span class="record-toggle" aria-hidden="true"></span><span class="record-summary-text">${escapeHtml(title)}</span></summary>
           <div class="record-section-body">
             ${innerHtml}
@@ -1628,7 +1632,7 @@
             <div class="record-grid">
               ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
             </div>
-          `)}
+          `, "intervention-details")}
           ${recordDetailsSection("特記事項", `
             <div class="record-grid">
               ${fieldGrid(record, SPECIAL_FIELDS)}
