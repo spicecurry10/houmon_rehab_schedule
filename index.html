@@ -813,8 +813,10 @@
       .time-box{
         min-height:48px;
         border-radius:13px;
-        color:#003f3f;
-        background:#00ffff;
+        color:#003f3f !important;
+        -webkit-text-fill-color:#003f3f !important;
+        background:#00ffff !important;
+        background-image:none !important;
         font-size:17px;
       }
 
@@ -877,8 +879,10 @@
       }
 
       .record-details.intervention-details summary,
-      .record-details.intervention-details .record-toggle{
-        color:#ff00ff;
+      .record-details.intervention-details .record-toggle,
+      .record-details.intervention-details .record-summary-text{
+        color:#ff00ff !important;
+        -webkit-text-fill-color:#ff00ff !important;
       }
 
       .record-section{
@@ -1589,7 +1593,7 @@
     }
 
     function recordDetailsSection(title, innerHtml, className = ""){
-      const colorStyle = className === "intervention-details" ? ` style="color:#ff00ff!important"` : "";
+      const colorStyle = className === "intervention-details" ? ` style="color:#ff00ff!important;-webkit-text-fill-color:#ff00ff!important"` : "";
       return `
         <details class="record-details ${escapeAttr(className)}">
           <summary${colorStyle}><span class="record-toggle" aria-hidden="true"${colorStyle}></span><span class="record-summary-text">${escapeHtml(title)}</span></summary>
@@ -1663,7 +1667,7 @@
       $("scheduleList").innerHTML = entries.map(entry => `
         <article class="card schedule-card" data-entry-id="${escapeAttr(entry.id)}">
           <div class="schedule-head">
-            <div class="time-box" style="color:#003f3f!important;background:#00ffff!important">${escapeHtml(entry.time || "--:--")}</div>
+            <div class="time-box" style="color:#003f3f!important;-webkit-text-fill-color:#003f3f!important;background:#00ffff!important;background-image:none!important">${escapeHtml(entry.time || "--:--")}</div>
             <div>
               <div class="schedule-name">${escapeHtml(entry.userName || "未設定")}</div>
               <div class="schedule-detail">
