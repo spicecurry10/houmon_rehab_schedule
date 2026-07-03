@@ -1912,11 +1912,13 @@
 
     function dailyText(){
       const dateText = $("selectedDate").value || today();
+      const fileDate = dateText.replaceAll("-", "");
       const allEntries = entriesForDate(dateText);
       const omitBlank = $("omitBlankDailyCopy").checked;
       const entries = omitBlank ? allEntries.filter(dailyEntryHasContent) : allEntries;
       const lines = [
         "【日別リハビリ予定】",
+        `ファイル名：日別リハビリ予定_${fileDate}.txt`,
         `日付：${dateLabel(dateText)}`,
         `出力：${entries.length}件`,
         ""
@@ -1938,6 +1940,10 @@
 
     function cleanText(value){
       return String(value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function safeFileNamePart(value){
+      return cleanText(value).replace(/[\\/:*?"<>|]/g, "＿") || "未設定";
     }
 
     function shortDate(dateText){
@@ -2034,6 +2040,9 @@
     function reportText(selectedUserId=""){
       const monthText = $("reportMonth").value || today().slice(0,7);
       const selectedUser = selectedUserId ? state.users.find(user => user.id === selectedUserId) : null;
+      const outputDate = today();
+      const outputName = selectedUser ? selectedUser.name : "全利用者";
+      const fileName = `${safeFileNamePart(outputName)}_${outputDate.replaceAll("-","")}_報告書用.txt`;
       const rows = [];
       datesInMonth(monthText).forEach(dateText => {
         entriesForDate(dateText).forEach(entry => {
@@ -2048,6 +2057,9 @@
 
       const lines = [
         "【LM Studio・既存報告書照合用出力】",
+        `ファイル名：${fileName}`,
+        `日付：${dateLabel(outputDate)}`,
+        `名前：${outputName}`,
         `対象月：${monthLabel(monthText)}`,
         `対象利用者：${selectedUser ? selectedUser.name : "全利用者"}`,
         `対象記録：${rows.length}件`,
