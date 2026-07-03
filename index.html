@@ -1910,15 +1910,18 @@
       return !!savedRecord && recordHasContent(savedRecord, entry.date);
     }
 
+    function dailyFileName(dateText){
+      return `${String(dateText || today()).replaceAll("-", "")}_TN.txt`;
+    }
+
     function dailyText(){
       const dateText = $("selectedDate").value || today();
-      const fileDate = dateText.replaceAll("-", "");
       const allEntries = entriesForDate(dateText);
       const omitBlank = $("omitBlankDailyCopy").checked;
       const entries = omitBlank ? allEntries.filter(dailyEntryHasContent) : allEntries;
       const lines = [
         "【日別リハビリ予定】",
-        `ファイル名：日別リハビリ予定_${fileDate}.txt`,
+        `ファイル名：${dailyFileName(dateText)}`,
         `日付：${dateLabel(dateText)}`,
         `出力：${entries.length}件`,
         ""
@@ -2108,7 +2111,7 @@
       return lines.join("\n").trim();
     }
 
-    async function copyText(text){
+    async function copyText(text, successMessage="コピーしました。", failureMessage="コピーできませんでした。画面下の内容を手動でコピーしてください。"){
       const value = String(text || "");
       let ok = false;
       try{
@@ -2124,8 +2127,32 @@
       if(!ok && navigator.clipboard && window.isSecureContext){
         try{await navigator.clipboard.writeText(value); ok = true}catch(e){ok = false}
       }
-      if(ok) alert("コピーしました。");
-      else alert("コピーできませんでした。画面下の内容を手動でコピーしてください。");
+      if(ok) alert(successMessage);
+      else alert(failureMessage);
+    }
+
+    function downloadText(text, fileName){
+      const blob = new Blob([String(text || "")], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyDaily(){
+      const dateText = $("selectedDate").value || today();
+      const text = dailyText();
+      const fileName = dailyFileName(dateText);
+      downloadText(text, fileName);
+      copyText(
+        text,
+        `${fileName} を保存し、内容をコピーしました。`,
+        `${fileName} は保存しましたが、内容をコピーできませんでした。`
+      );
     }
 
     function exportData(){
@@ -2255,7 +2282,7 @@
     $("closeOneDayBtn").addEventListener("click", closeOneDayModal);
     $("saveOneDayBtn").addEventListener("click", saveOneDay);
     $("oneDayModal").addEventListener("click", e => {if(e.target.id === "oneDayModal") closeOneDayModal()});
-    $("copyDailyBtn").addEventListener("click", () => copyText(dailyText()));
+    $("copyDailyBtn").addEventListener("click", copyDaily);
     $("copyReportBtn").addEventListener("click", () => copyText(reportText($("reportUser").value)));
     $("copyWeeklyBtn").addEventListener("click", () => copyText(weeklyText()));
     $("exportBtn").addEventListener("click", exportData);
