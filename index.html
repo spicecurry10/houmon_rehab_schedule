@@ -2001,22 +2001,6 @@
       return parts.join("。") || "記録なし";
     }
 
-    function lmStudioPromptText(){
-      return [
-        "【LM Studio用指示】",
-        "以下の【今月の訪問記録】をもとに、既存報告書の文体・項目順に照らし合わせて月次報告書へ書き換えてください。",
-        "既存報告書に記載があり、今月の記録で明確な変化がない項目は既存表現を優先してください。",
-        "今月の記録から改善・悪化・変更が読み取れる項目のみ更新してください。",
-        "記録にない内容は推測せず、必要時は「記録なし」としてください。",
-        "出力は報告書本文のみとし、見出し・箇条書き・Markdown記号は使わないでください。",
-        "",
-        "【既存報告書】",
-        "ここに既存の報告書本文を貼り付け",
-        "",
-        "【今月の訪問記録】"
-      ].join("\n");
-    }
-
     function lmStudioUserBlock(userName, monthText, items){
       const sorted = [...items].sort((a,b) => a.dateText.localeCompare(b.dateText) || String(a.entry.time||"").localeCompare(String(b.entry.time||"")));
       const lines = [
@@ -2040,10 +2024,11 @@
       return lines.join("\n").trim();
     }
 
-    function reportFileName(selectedUserId="", dateText=today()){
+    function reportFileName(selectedUserId="", monthText=""){
       const selectedUser = selectedUserId ? state.users.find(user => user.id === selectedUserId) : null;
       const outputName = selectedUser ? selectedUser.name : "全利用者";
-      return `${dateText.replaceAll("-","")}_${safeFileNamePart(outputName)}_報告書用.txt`;
+      const targetMonth = monthText || $("reportMonth").value || today().slice(0,7);
+      return `${targetMonth.replaceAll("-","")}_${safeFileNamePart(outputName)}_報告書用.txt`;
     }
 
     function reportText(selectedUserId=""){
@@ -2051,7 +2036,7 @@
       const selectedUser = selectedUserId ? state.users.find(user => user.id === selectedUserId) : null;
       const outputDate = today();
       const outputName = selectedUser ? selectedUser.name : "全利用者";
-      const fileName = reportFileName(selectedUserId, outputDate);
+      const fileName = reportFileName(selectedUserId, monthText);
       const rows = [];
       datesInMonth(monthText).forEach(dateText => {
         entriesForDate(dateText).forEach(entry => {
@@ -2094,7 +2079,6 @@
         })
         .forEach(([, items]) => {
           const userName = items[0] && items[0].entry.userName ? items[0].entry.userName : "未設定";
-          lines.push(lmStudioPromptText());
           lines.push(lmStudioUserBlock(userName, monthText, items));
           lines.push("──────────────────────────────", "");
         });
@@ -2187,7 +2171,8 @@
     async function copyReport(){
       const selectedUserId = $("reportUser").value;
       const text = reportText(selectedUserId);
-      const fileName = reportFileName(selectedUserId);
+      const monthText = $("reportMonth").value || today().slice(0,7);
+      const fileName = reportFileName(selectedUserId, monthText);
       const result = await saveReportFile(text, fileName);
       if(result === "cancelled") return;
       if(result === "shared"){
