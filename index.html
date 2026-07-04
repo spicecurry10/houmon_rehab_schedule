@@ -1914,7 +1914,7 @@
     }
 
     function dailyFileName(dateText){
-      return `${String(dateText || today()).replaceAll("-", "")}_TN.txt`;
+      return `${String(dateText || today()).slice(5).replaceAll("-", "")}_実績.txt`;
     }
 
     function dailyText(){
