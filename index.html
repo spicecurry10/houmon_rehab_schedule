@@ -2160,7 +2160,7 @@
       const mobileScreen = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
       if(mobileScreen && typeof File === "function" && navigator.share && navigator.canShare){
         const file = new File([String(text || "")], fileName, {type:"text/plain;charset=utf-8"});
-        const shareData = {title:fileName, files:[file]};
+        const shareData = {files:[file]};
         if(navigator.canShare(shareData)){
           try{
             await navigator.share(shareData);
