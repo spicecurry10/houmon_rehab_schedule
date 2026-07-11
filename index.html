@@ -7,6 +7,9 @@
   <!--
     更新履歴
 
+    2026-07-11
+    - 日別一括出力でファイル名だけの不要なテキストがLocalSendに追加される問題を修正
+
     2026-07-04
     - 「全利用者」の報告書を利用者ごとの個別ファイルで保存するよう変更
 
@@ -2156,11 +2159,14 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    async function saveReportFile(text, fileName){
+    async function saveReportFile(text, fileName, {suppressFileNameMessage=false}={}){
       const mobileScreen = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
       if(mobileScreen && typeof File === "function" && navigator.share && navigator.canShare){
         const file = new File([String(text || "")], fileName, {type:"text/plain;charset=utf-8"});
-        const shareData = {files:[file]};
+        // Androidの一部ブラウザでは、ファイルだけを共有するとファイル名が共有テキストにも入る。
+        // LocalSendはそのテキストをUUID名の別ファイルにするため、日別出力では空白で上書きする。
+        const isAndroid = /Android/i.test(navigator.userAgent || "");
+        const shareData = suppressFileNameMessage && isAndroid ? {files:[file], text:" "} : {files:[file]};
         if(navigator.canShare(shareData)){
           try{
             await navigator.share(shareData);
@@ -2219,7 +2225,7 @@
       const dateText = $("selectedDate").value || today();
       const text = dailyText();
       const fileName = dailyFileName(dateText);
-      const result = await saveReportFile(text, fileName);
+      const result = await saveReportFile(text, fileName, {suppressFileNameMessage:true});
       if(result === "cancelled") return;
       if(result === "shared"){
         alert(`${fileName} をスマホの共有画面へ出力しました。「ファイルに保存」または「LocalSend」を選んでください。`);
