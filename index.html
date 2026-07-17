@@ -7,6 +7,10 @@
   <!--
     更新履歴
 
+    2026-07-17
+    - 各介入を「実施内容」と「所見」に分け、自然文変換用の出力にも項目名を追加
+    - スマホの現在時刻に合わせ、今日の日別予定で対象利用者へ自動移動する機能を追加
+
     2026-07-11
     - 日別一括出力でファイル名だけの不要なテキストがLocalSendに追加される問題を修正
 
@@ -309,7 +313,17 @@
       width:100%;
     }
 
-    .schedule-card{padding:13px}
+    .schedule-card{
+      padding:13px;
+      scroll-margin-top:124px;
+      transition:outline-color .2s ease,box-shadow .2s ease,background-color .2s ease;
+    }
+    .schedule-card.current-time-card{
+      outline:3px solid #f2b72c;
+      outline-offset:2px;
+      background:#fffdf5;
+      box-shadow:0 14px 32px rgba(171,117,0,.2);
+    }
     .schedule-head{
       display:grid;
       grid-template-columns:88px 1fr auto;
@@ -333,6 +347,13 @@
 
     .schedule-name{font-size:17px;font-weight:900}
     .schedule-detail{color:var(--muted);font-weight:800;font-size:12px}
+    .current-time-chip{display:none}
+    .current-time-card .current-time-chip{
+      display:inline-flex;
+      color:#6c4700;
+      background:#fff2c7;
+      border-color:#edc558;
+    }
     .schedule-body{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -475,6 +496,15 @@
       font-size:12px;
       font-weight:900;
     }
+
+    .intervention-field + .intervention-field{margin-top:9px}
+    .findings-field[hidden]{display:none}
+    .intervention-field label{
+      display:block;
+      margin-bottom:5px;
+      color:#405648;
+    }
+    .intervention-field textarea{min-height:72px}
 
     .choice-row,.tool-row{
       display:flex;
@@ -1045,7 +1075,7 @@
     <section id="usersScreen" class="screen">
       <div class="toolbar">
         <button type="button" id="addUserBtn">＋ 利用者を追加</button>
-        <input type="search" id="userSearch" class="grow" placeholder="利用者検索">
+        <input type="search" id="userSearch" class="grow">
       </div>
       <div class="summary-bar">
         <span id="userSummary">利用者：0名</span>
@@ -1098,7 +1128,7 @@
       <h2 id="userModalTitle" class="modal-title">利用者設定</h2>
       <div class="settings-name">
         <label for="modalUserName">利用者名</label>
-        <input type="text" id="modalUserName" placeholder="例：山田 太郎">
+        <input type="text" id="modalUserName">
       </div>
       <div id="daySettings"></div>
       <div class="modal-actions">
@@ -1137,7 +1167,7 @@
         </div>
         <div class="memo-cell">
           <label for="oneDayMemo">メモ</label>
-          <textarea id="oneDayMemo" placeholder="申し送り・注意点"></textarea>
+          <textarea id="oneDayMemo"></textarea>
         </div>
       </div>
       <div class="modal-actions">
@@ -1216,8 +1246,8 @@
       ["interventions.rom","ROM訓練"],
       ["interventions.strength","筋力訓練"],
       ["interventions.balance","バランス練習"],
-      ["interventions.gait","歩行練習"],
       ["interventions.basic","基本動作練習"],
+      ["interventions.gait","歩行練習"],
       ["interventions.adl","ADL練習"],
       ["interventions.selfTraining","自主訓練指導"],
       ["interventions.environment","環境調整"],
@@ -1234,6 +1264,7 @@
 
     let state = loadState();
     let editingUserId = "";
+    let lastAutoFocusKey = "";
 
     const $ = id => document.getElementById(id);
 
@@ -1296,7 +1327,7 @@
     }
 
     function emptyIntervention(){
-      return {done:false, note:""};
+      return {done:false, content:"", findings:""};
     }
 
     function emptyRecord(dateText){
@@ -1372,7 +1403,12 @@
       });
       out.interventions = {...base.interventions, ...(saved.interventions || {})};
       Object.keys(base.interventions).forEach(key => {
-        out.interventions[key] = {...base.interventions[key], ...(saved.interventions && saved.interventions[key] ? saved.interventions[key] : {})};
+        const savedIntervention = saved.interventions && saved.interventions[key] ? saved.interventions[key] : {};
+        out.interventions[key] = {...base.interventions[key], ...savedIntervention};
+        if(!String(out.interventions[key].content || "").trim() && String(savedIntervention.note || "").trim()){
+          out.interventions[key].content = savedIntervention.note;
+        }
+        delete out.interventions[key].note;
       });
       return out;
     }
@@ -1425,7 +1461,10 @@
       document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
       $(`${name}Screen`).classList.add("active");
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.screen === name));
-      if(name === "daily") renderDaily();
+      if(name === "daily"){
+        lastAutoFocusKey = "";
+        renderDaily();
+      }
       if(name === "weekly") renderWeekly();
     }
 
@@ -1529,11 +1568,11 @@
       return JSON.stringify(normalized) !== JSON.stringify(base);
     }
 
-    function inputField(record, path, labelText, placeholder="", kind="input", extraClass=""){
+    function inputField(record, path, labelText, hintText="", kind="input", extraClass=""){
       const value = getPath(record, path) || "";
       const tag = kind === "textarea"
-        ? `<textarea data-record-field="${escapeAttr(path)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value)}</textarea>`
-        : `<input type="${kind === "date" ? "date" : "text"}" data-record-field="${escapeAttr(path)}" value="${escapeAttr(value)}" placeholder="${escapeAttr(placeholder)}">`;
+        ? `<textarea data-record-field="${escapeAttr(path)}">${escapeHtml(value)}</textarea>`
+        : `<input type="${kind === "date" ? "date" : "text"}" data-record-field="${escapeAttr(path)}" value="${escapeAttr(value)}">`;
       return `
         <div class="record-field ${extraClass}">
           <label>${escapeHtml(labelText)}</label>
@@ -1559,7 +1598,7 @@
               </label>
             `).join("")}
           </div>
-          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}" placeholder="メモ">
+          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}">
         </div>
       `;
     }
@@ -1578,22 +1617,26 @@
               </label>
             `).join("")}
           </div>
-          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}" placeholder="メモ">
+          <input type="text" data-record-field="${escapeAttr(path + ".memo")}" value="${escapeAttr(getPath(record, path + ".memo") || "")}">
         </div>
       `;
     }
 
     function interventionCard(record, path, labelText){
+      const content = getPath(record, path + ".content") || "";
+      const findings = getPath(record, path + ".findings") || "";
+      const showFindings = String(content).trim() || String(findings).trim();
       return `
         <div class="record-card">
           <div class="record-card-title">${escapeHtml(labelText)}</div>
-          <div class="choice-row">
-            <label class="pill-choice">
-              <input type="checkbox" data-record-check="${escapeAttr(path + ".done")}" ${getPath(record, path + ".done") ? "checked" : ""}>
-              実施
-            </label>
+          <div class="intervention-field">
+            <label>実施内容</label>
+            <textarea data-record-field="${escapeAttr(path + ".content")}" placeholder="動作名、開始姿勢、支持物、介助量、回数">${escapeHtml(content)}</textarea>
           </div>
-          <textarea data-record-field="${escapeAttr(path + ".note")}" placeholder="内容・負荷量・反応など">${escapeHtml(getPath(record, path + ".note") || "")}</textarea>
+          <div class="intervention-field findings-field" ${showFindings ? "" : "hidden"}>
+            <label>所見</label>
+            <textarea data-record-field="${escapeAttr(path + ".findings")}" placeholder="できた程度、ふらつき、代償動作、介助が必要な場面、疼痛・疲労">${escapeHtml(findings)}</textarea>
+          </div>
         </div>
       `;
     }
@@ -1624,10 +1667,15 @@
             <div class="record-vital-grid">
               ${fieldGrid(record, VITAL_FIELDS)}
             </div>
-            <div class="record-overview-single">
+           <div class="record-overview-single">
               ${inputField(record, "overview.general", "全体の様子", "例：表情穏やか。疲労感は軽度。", "textarea", "full")}
             </div>
           </div>
+          ${recordDetailsSection("介入内容", `
+            <div class="record-grid">
+              ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
+            </div>
+          `, "intervention-details")}
           ${recordDetailsSection("身体機能", `
             <div class="record-grid">
               ${fieldGrid(record, PHYSICAL_FIELDS)}
@@ -1646,11 +1694,6 @@
               ${ADL_ACTIONS.map(item => levelCard(entry.id, record, item[0], item[1], item[2])).join("")}
             </div>
           `)}
-          ${recordDetailsSection("介入内容", `
-            <div class="record-grid">
-              ${INTERVENTIONS.map(item => interventionCard(record, item[0], item[1])).join("")}
-            </div>
-          `, "intervention-details")}
           ${recordDetailsSection("特記事項", `
             <div class="record-grid">
               ${fieldGrid(record, SPECIAL_FIELDS)}
@@ -1658,6 +1701,72 @@
           `)}
         </div>
       `;
+    }
+
+    function minutesFromTime(timeText){
+      const match = String(timeText || "").match(/^(\d{1,2}):(\d{2})$/);
+      if(!match) return null;
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      if(hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+      return hours * 60 + minutes;
+    }
+
+    function durationMinutes(durationText){
+      const match = String(durationText || "").match(/\d+/);
+      return match ? Math.max(1, Number(match[0])) : 40;
+    }
+
+    function targetForCurrentTime(entries, now = new Date()){
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const timedEntries = entries
+        .map(entry => ({entry, start:minutesFromTime(entry.time)}))
+        .filter(item => item.start !== null);
+      if(!timedEntries.length) return null;
+
+      const active = timedEntries.find(item => {
+        const end = item.start + durationMinutes(item.entry.duration);
+        return item.start <= currentMinutes && currentMinutes < end;
+      });
+      if(active) return {entry:active.entry, label:"現在の予定"};
+
+      const next = timedEntries.find(item => item.start > currentMinutes);
+      if(next) return {entry:next.entry, label:"次の予定"};
+      return {entry:timedEntries[timedEntries.length - 1].entry, label:"本日の最終予定"};
+    }
+
+    function focusDailyEntryForCurrentTime(){
+      const cards = Array.from($("scheduleList").querySelectorAll(".schedule-card"));
+      cards.forEach(card => {
+        card.classList.remove("current-time-card");
+        card.removeAttribute("aria-current");
+      });
+
+      const dateText = $("selectedDate").value || today();
+      if(dateText !== today() || !$("dailyScreen").classList.contains("active")){
+        lastAutoFocusKey = "";
+        return;
+      }
+
+      const target = targetForCurrentTime(entriesForDate(dateText));
+      if(!target) return;
+      const targetEntry = target.entry;
+      const targetCard = cards.find(card => card.dataset.entryId === targetEntry.id);
+      if(!targetCard) return;
+
+      targetCard.classList.add("current-time-card");
+      targetCard.setAttribute("aria-current", "true");
+      const targetChip = targetCard.querySelector(".current-time-chip");
+      if(targetChip) targetChip.textContent = target.label;
+
+      const focusKey = `${dateText}:${targetEntry.id}`;
+      if(focusKey === lastAutoFocusKey) return;
+      const activeElement = document.activeElement;
+      if(activeElement && activeElement.matches("input,textarea,select") && activeElement.closest(".schedule-card")) return;
+
+      lastAutoFocusKey = focusKey;
+      const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      targetCard.scrollIntoView({behavior:reduceMotion ? "auto" : "smooth", block:"start"});
     }
 
     function renderDaily(){
@@ -1679,6 +1788,7 @@
               <div class="schedule-detail">
                 <span class="chip ${entry.source === "date" ? "blue" : ""}">${entry.source === "date" ? "日付別" : "曜日設定"}</span>
                 <span class="chip">${escapeHtml(entry.duration || "40分")}</span>
+                <span class="chip current-time-chip">時刻から選択</span>
               </div>
             </div>
             ${entry.source === "date" ? `<button type="button" class="danger delete-one-day">削除</button>` : `<button type="button" class="secondary open-user-from-entry">設定</button>`}
@@ -1695,6 +1805,7 @@
           ${renderRecordForm(entry)}
         </article>
       `).join("");
+      requestAnimationFrame(focusDailyEntryForCurrentTime);
     }
 
     function renderWeekly(){
@@ -1872,9 +1983,14 @@
 
     function interventionText(record, path, labelText){
       const done = getPath(record, `${path}.done`);
-      const note = getPath(record, `${path}.note`);
-      if(!done && !note) return "";
-      return `${labelText}：${done ? "実施" : "未チェック"}${note ? `／${note}` : ""}`;
+      const content = cleanText(getPath(record, `${path}.content`));
+      const findings = cleanText(getPath(record, `${path}.findings`));
+      if(!done && !content && !findings) return "";
+      const implemented = done || !!content;
+      const details = [];
+      if(content) details.push(`実施内容：${content}`);
+      if(findings) details.push(`所見：${findings}`);
+      return `${labelText}：${implemented ? "実施" : "未チェック"}${details.length ? `／${details.join("／")}` : ""}`;
     }
 
     function recordText(record, defaultDate){
@@ -2281,7 +2397,7 @@
     function exportData(){
       const data = {
         app:"houmon_rehab_schedule",
-        version:1,
+        version:2,
         exportedAt:new Date().toISOString(),
         ...state
       };
@@ -2350,6 +2466,14 @@
       const field = target.dataset.recordField;
       if(field){
         setPath(record, field, target.value);
+        if(field.endsWith(".content")){
+          const intervention = target.closest(".record-card");
+          const findingsField = intervention && intervention.querySelector(".findings-field");
+          const findingsInput = findingsField && findingsField.querySelector("textarea");
+          if(findingsField){
+            findingsField.hidden = !target.value.trim() && !(findingsInput && findingsInput.value.trim());
+          }
+        }
         saveState();
         updateRecordStatus(card, record, entry.date);
         return true;
@@ -2386,8 +2510,15 @@
     document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => showScreen(btn.dataset.screen)));
     $("selectedDate").value = today();
     $("reportMonth").value = today().slice(0,7);
-    $("todayBtn").addEventListener("click", () => {$("selectedDate").value = today(); renderDaily()});
-    $("selectedDate").addEventListener("change", renderDaily);
+    $("todayBtn").addEventListener("click", () => {
+      $("selectedDate").value = today();
+      lastAutoFocusKey = "";
+      renderDaily();
+    });
+    $("selectedDate").addEventListener("change", () => {
+      lastAutoFocusKey = "";
+      renderDaily();
+    });
     $("reportMonth").addEventListener("change", () => {
       const month = $("reportMonth").value;
       if(month && !$("selectedDate").value.startsWith(month)){
@@ -2480,6 +2611,7 @@
     renderUsers();
     renderDaily();
     renderWeekly();
+    setInterval(focusDailyEntryForCurrentTime, 30000);
   </script>
 </body>
 </html>
