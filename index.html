@@ -7,6 +7,11 @@
   <!--
     更新履歴
 
+    2026-07-20
+    - 利用者設定にふりがなと報告書出力対象のチェックを追加
+    - 利用者をふりがな基準の五十音順で表示し、チェック済み利用者だけ報告書出力するよう変更
+    - 曜日別タブ・曜日別一覧・週間コピーを削除（利用者の曜日設定と日別予定への反映は継続）
+
     2026-07-17
     - 各介入を「実施内容」と「所見」に分け、自然文変換用の出力にも項目名を追加
     - スマホの現在時刻に合わせ、今日の日別予定で対象利用者へ自動移動する機能を追加
@@ -156,7 +161,7 @@
       margin:0 auto;
       padding:10px 12px;
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(2,1fr);
       gap:8px;
     }
 
@@ -269,6 +274,26 @@
 
     .user-name:focus{background:#fff;border-color:#cfe3d5}
     .user-actions{display:flex;gap:8px;align-items:center}
+    .report-target{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border:1px solid #cfe3d5;
+      border-radius:13px;
+      color:#275d39;
+      background:var(--soft-green);
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+    .report-target input{
+      width:18px;
+      min-height:18px;
+      margin:0;
+      accent-color:var(--green);
+    }
     .meta-line{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:12px;font-weight:800}
 
     .chip{
@@ -554,42 +579,6 @@
 
     .status-toggle input{width:auto;min-height:auto;accent-color:var(--green)}
 
-    .week-grid{
-      display:grid;
-      grid-template-columns:repeat(5,minmax(0,1fr));
-      gap:10px;
-    }
-
-    .day-column{
-      min-height:180px;
-      border:1px solid #dce9e0;
-      border-radius:18px;
-      overflow:hidden;
-      background:#fff;
-      box-shadow:var(--shadow-soft);
-    }
-
-    .day-head{
-      padding:10px;
-      text-align:center;
-      color:#fff;
-      background:linear-gradient(180deg,#347f4c,#1f5d34);
-      font-weight:900;
-    }
-
-    .day-body{padding:9px;display:flex;flex-direction:column;gap:8px}
-    .mini-item{
-      padding:8px 9px;
-      border:1px solid #e3eee7;
-      border-radius:12px;
-      background:#f9fcfa;
-      font-size:12px;
-      font-weight:800;
-      color:#33463a;
-    }
-
-    .mini-time{font-size:14px;color:var(--green-dark);font-weight:900}
-
     .modal-backdrop{
       position:fixed;
       inset:0;
@@ -616,7 +605,32 @@
     .modal-title{margin:0 0 14px;text-align:center;font-size:20px;font-weight:900}
     .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .settings-name{margin-bottom:12px}
+    .settings-profile{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .report-setting{
+      grid-column:1 / -1;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-height:44px;
+      padding:10px 12px;
+      border:1px solid #cfe3d5;
+      border-radius:14px;
+      color:#275d39;
+      background:var(--soft-green);
+      font-size:14px;
+      cursor:pointer;
+    }
+    .report-setting input{
+      width:20px;
+      min-height:20px;
+      margin:0;
+      accent-color:var(--green);
+    }
 
     .day-setting{
       display:grid;
@@ -675,7 +689,7 @@
         font-size:14px;
       }
       .tabs{top:57px}
-      .tab-inner{grid-template-columns:1fr 1fr 1fr;gap:6px}
+      .tab-inner{grid-template-columns:1fr 1fr;gap:6px}
       .tab-btn{padding:8px 7px;font-size:12px}
       .toolbar button{flex:1 1 auto}
       .date-grid{grid-template-columns:1fr 1fr}
@@ -688,7 +702,6 @@
       .schedule-body{grid-template-columns:1fr}
       .record-vital-grid{grid-template-columns:1fr 1fr}
       .record-grid,.record-grid.four{grid-template-columns:1fr}
-      .week-grid{grid-template-columns:1fr}
       .form-grid{grid-template-columns:1fr}
       .day-setting{grid-template-columns:1fr 1fr}
       .day-check{grid-column:1 / -1}
@@ -952,30 +965,6 @@
         font-size:12px;
       }
 
-      .week-grid{
-        gap:9px;
-      }
-
-      .day-column{
-        min-height:auto;
-        border-radius:14px;
-      }
-
-      .day-head{
-        padding:8px 10px;
-        font-size:13px;
-      }
-
-      .day-body{
-        padding:8px;
-        gap:7px;
-      }
-
-      .mini-item{
-        padding:7px 8px;
-        border-radius:10px;
-      }
-
       .modal-backdrop{
         align-items:flex-end;
         padding:8px;
@@ -993,7 +982,18 @@
         font-size:17px;
       }
 
-      .settings-name{margin-bottom:9px}
+      .settings-profile{
+        grid-template-columns:1fr;
+        gap:7px;
+        margin-bottom:9px;
+      }
+
+      .report-setting{
+        grid-column:auto;
+        min-height:42px;
+        padding:8px 10px;
+        font-size:12px;
+      }
 
       .day-setting{
         grid-template-columns:1fr 104px;
@@ -1067,7 +1067,6 @@
     <div class="tab-inner">
       <button type="button" class="tab-btn" data-screen="users">利用者</button>
       <button type="button" class="tab-btn active" data-screen="daily">日別予定</button>
-      <button type="button" class="tab-btn" data-screen="weekly">曜日別</button>
     </div>
   </nav>
 
@@ -1079,7 +1078,7 @@
       </div>
       <div class="summary-bar">
         <span id="userSummary">利用者：0名</span>
-        <span>自動保存</span>
+        <span>ふりがな順・自動保存</span>
       </div>
       <div id="userList" class="user-list"></div>
     </section>
@@ -1089,7 +1088,7 @@
         <div class="report-grid">
           <input type="month" id="reportMonth">
           <select id="reportUser">
-            <option value="">全利用者</option>
+            <option value="">チェック済み利用者</option>
           </select>
           <button type="button" id="copyReportBtn">報告書ファイル保存</button>
         </div>
@@ -1114,21 +1113,24 @@
       <div id="scheduleList" class="schedule-list"></div>
     </section>
 
-    <section id="weeklyScreen" class="screen">
-      <div class="summary-bar">
-        <span id="weeklySummary">曜日別リハビリ予定</span>
-        <button type="button" id="copyWeeklyBtn" class="secondary">週間コピー</button>
-      </div>
-      <div id="weeklyGrid" class="week-grid"></div>
-    </section>
   </main>
 
   <div id="userModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <h2 id="userModalTitle" class="modal-title">利用者設定</h2>
-      <div class="settings-name">
-        <label for="modalUserName">利用者名</label>
-        <input type="text" id="modalUserName">
+      <div class="settings-profile">
+        <div>
+          <label for="modalUserName">利用者名</label>
+          <input type="text" id="modalUserName">
+        </div>
+        <div>
+          <label for="modalUserKana">ふりがな（五十音順）</label>
+          <input type="text" id="modalUserKana" placeholder="例：やまだ たろう" autocomplete="off">
+        </div>
+        <label class="report-setting">
+          <input type="checkbox" id="modalReportEnabled" checked>
+          この利用者の報告書を出力する
+        </label>
       </div>
       <div id="daySettings"></div>
       <div class="modal-actions">
@@ -1422,8 +1424,44 @@
       return out;
     }
 
+    const JAPANESE_COLLATOR = new Intl.Collator("ja", {
+      usage:"sort",
+      sensitivity:"base",
+      numeric:true
+    });
+
+    function japaneseSortText(value){
+      return String(value || "")
+        .normalize("NFKC")
+        .trim()
+        .replace(/\s+/g, "")
+        .replace(/[\u30a1-\u30f6]/g, char => String.fromCharCode(char.charCodeAt(0) - 0x60));
+    }
+
+    function compareUsers(a, b){
+      const keyA = japaneseSortText(a && a.nameKana ? a.nameKana : a && a.name);
+      const keyB = japaneseSortText(b && b.nameKana ? b.nameKana : b && b.name);
+      return JAPANESE_COLLATOR.compare(keyA, keyB)
+        || JAPANESE_COLLATOR.compare(japaneseSortText(a && a.name), japaneseSortText(b && b.name))
+        || String(a && a.id || "").localeCompare(String(b && b.id || ""));
+    }
+
+    function isReportTarget(user){
+      return Boolean(user) && user.reportEnabled !== false;
+    }
+
+    function reportTargetUsers(){
+      return [...state.users].filter(isReportTarget).sort(compareUsers);
+    }
+
     function makeUser(name){
-      return {id:uid(), name:String(name||"未設定").trim() || "未設定", schedule:emptySchedule()};
+      return {
+        id:uid(),
+        name:String(name || "未設定").trim() || "未設定",
+        nameKana:"",
+        reportEnabled:true,
+        schedule:emptySchedule()
+      };
     }
 
     function normalizeUser(user){
@@ -1433,6 +1471,8 @@
         ...user,
         id:user && user.id ? user.id : base.id,
         name:String(user && user.name ? user.name : "未設定").trim() || "未設定",
+        nameKana:String(user && user.nameKana ? user.nameKana : "").trim(),
+        reportEnabled:user && typeof user.reportEnabled === "boolean" ? user.reportEnabled : true,
         schedule:{...emptySchedule(), ...(user && user.schedule ? user.schedule : {})}
       };
     }
@@ -1465,7 +1505,6 @@
         lastAutoFocusKey = "";
         renderDaily();
       }
-      if(name === "weekly") renderWeekly();
     }
 
     function scheduleSummary(user){
@@ -1479,9 +1518,9 @@
       const q = $("userSearch").value.trim().toLowerCase();
       const list = state.users
         .filter(user => !q || user.name.toLowerCase().includes(q))
-        .sort((a,b) => a.name.localeCompare(b.name, "ja"));
+        .sort(compareUsers);
       $("userCount").textContent = state.users.length;
-      $("userSummary").textContent = `利用者：${state.users.length}名`;
+      $("userSummary").textContent = `利用者：${state.users.length}名（報告書：${reportTargetUsers().length}名）`;
       renderReportUsers();
       if(!list.length){
         $("userList").innerHTML = `<div class="empty">利用者がありません</div>`;
@@ -1494,10 +1533,15 @@
               <input class="user-name" value="${escapeHtml(user.name)}" aria-label="利用者名">
             </div>
             <div class="meta-line">
+              ${user.nameKana ? `<span class="chip blue">ふりがな：${escapeHtml(user.nameKana)}</span>` : ""}
               ${scheduleSummary(user).slice(0,7).map(x => `<span class="chip">${escapeHtml(x)}</span>`).join("")}
             </div>
           </div>
           <div class="user-actions">
+            <label class="report-target">
+              <input type="checkbox" class="report-target-toggle" aria-label="${escapeAttr(user.name)}を報告書出力対象にする" ${isReportTarget(user) ? "checked" : ""}>
+              報告書
+            </label>
             <button type="button" class="blue open-settings">設定</button>
           </div>
         </article>
@@ -1508,12 +1552,12 @@
       const select = $("reportUser");
       if(!select) return;
       const current = select.value;
-      const options = [`<option value="">全利用者</option>`]
-        .concat([...state.users]
-          .sort((a,b) => a.name.localeCompare(b.name, "ja"))
+      const targets = reportTargetUsers();
+      const options = [`<option value="">チェック済み利用者（${targets.length}名）</option>`]
+        .concat(targets
           .map(user => `<option value="${escapeAttr(user.id)}">${escapeHtml(user.name)}</option>`));
       select.innerHTML = options.join("");
-      select.value = state.users.some(user => user.id === current) ? current : "";
+      select.value = targets.some(user => user.id === current) ? current : "";
     }
 
     function entriesForDate(dateText){
@@ -1808,37 +1852,13 @@
       requestAnimationFrame(focusDailyEntryForCurrentTime);
     }
 
-    function renderWeekly(){
-      const columns = DAYS.map(day => {
-        const items = state.users
-          .filter(user => user.schedule[day.key] && user.schedule[day.key].enabled)
-          .map(user => ({user, schedule:user.schedule[day.key]}))
-          .sort((a,b) => String(a.schedule.time||"").localeCompare(String(b.schedule.time||"")) || a.user.name.localeCompare(b.user.name, "ja"));
-        return `
-          <section class="day-column">
-            <div class="day-head">${day.full}</div>
-            <div class="day-body">
-              ${items.length ? items.map(item => `
-                <div class="mini-item">
-                  <div class="mini-time">${escapeHtml(item.schedule.time || "--:--")}</div>
-                  <div>${escapeHtml(item.user.name)}</div>
-                  <div>${escapeHtml(item.schedule.duration || "40分")}</div>
-                </div>
-              `).join("") : `<div class="mini-item">予定なし</div>`}
-            </div>
-          </section>
-        `;
-      }).join("");
-      $("weeklyGrid").innerHTML = columns;
-      const total = DAYS.reduce((sum, day) => sum + state.users.filter(user => user.schedule[day.key] && user.schedule[day.key].enabled).length, 0);
-      $("weeklySummary").textContent = `曜日別リハビリ予定：${total}件`;
-    }
-
     function openUserModal(userId){
       editingUserId = userId || "";
       const user = editingUserId ? state.users.find(u => u.id === editingUserId) : makeUser("");
       $("userModalTitle").textContent = editingUserId ? "利用者設定" : "利用者を追加";
       $("modalUserName").value = editingUserId ? user.name : "";
+      $("modalUserKana").value = user.nameKana || "";
+      $("modalReportEnabled").checked = isReportTarget(user);
       $("deleteArea").classList.toggle("hidden", !editingUserId);
       $("daySettings").innerHTML = DAYS.map(day => {
         const s = user.schedule[day.key] || emptySchedule()[day.key];
@@ -1879,13 +1899,19 @@
 
     function saveUserSettings(){
       const name = $("modalUserName").value.trim() || "未設定";
+      const nameKana = $("modalUserKana").value.trim();
+      const reportEnabled = $("modalReportEnabled").checked;
       if(editingUserId){
         const user = state.users.find(u => u.id === editingUserId);
         if(!user) return;
         user.name = name;
+        user.nameKana = nameKana;
+        user.reportEnabled = reportEnabled;
         user.schedule = collectScheduleFromModal();
       }else{
         const user = makeUser(name);
+        user.nameKana = nameKana;
+        user.reportEnabled = reportEnabled;
         user.schedule = collectScheduleFromModal();
         state.users.push(user);
         editingUserId = user.id;
@@ -1894,7 +1920,6 @@
       closeUserModal();
       renderUsers();
       renderDaily();
-      renderWeekly();
     }
 
     function closeUserModal(){
@@ -1920,12 +1945,14 @@
       closeUserModal();
       renderUsers();
       renderDaily();
-      renderWeekly();
     }
 
     function openOneDayModal(){
       $("oneDayDate").value = $("selectedDate").value || today();
-      $("oneDayUser").innerHTML = state.users.map(user => `<option value="${user.id}">${escapeHtml(user.name)}</option>`).join("");
+      $("oneDayUser").innerHTML = [...state.users]
+        .sort(compareUsers)
+        .map(user => `<option value="${user.id}">${escapeHtml(user.name)}</option>`)
+        .join("");
       $("oneDayTime").value = "09:00";
       $("oneDayDuration").value = "40分";
       $("oneDayMemo").value = "";
@@ -1957,7 +1984,6 @@
       saveState();
       closeOneDayModal();
       renderDaily();
-      renderWeekly();
     }
 
     function addLine(lines, labelText, value){
@@ -2155,14 +2181,22 @@
 
     function reportText(selectedUserId="", outputFileName=""){
       const monthText = $("reportMonth").value || today().slice(0,7);
-      const selectedUser = selectedUserId ? state.users.find(user => user.id === selectedUserId) : null;
+      const targets = reportTargetUsers();
+      const targetUserIds = new Set(targets.map(user => user.id));
+      const selectedUser = selectedUserId
+        ? targets.find(user => user.id === selectedUserId)
+        : null;
       const outputDate = today();
-      const outputName = selectedUser ? selectedUser.name : "全利用者";
+      const outputName = selectedUser ? selectedUser.name : "報告書対象利用者";
       const fileName = outputFileName || reportFileName(selectedUserId, monthText);
       const rows = [];
       datesInMonth(monthText).forEach(dateText => {
         entriesForDate(dateText).forEach(entry => {
-          if(selectedUserId && entry.userId !== selectedUserId) return;
+          if(selectedUserId){
+            if(!selectedUser || entry.userId !== selectedUserId) return;
+          }else if(!targetUserIds.has(entry.userId)){
+            return;
+          }
           const record = state.records && state.records[entry.id] ? mergeRecord(emptyRecord(entry.date), state.records[entry.id]) : null;
           const text = record ? recordText(record, entry.date) : "";
           if(text || state.done[entry.id] || entry.memo){
@@ -2177,7 +2211,7 @@
         `日付：${dateLabel(outputDate)}`,
         `名前：${outputName}`,
         `対象月：${monthLabel(monthText)}`,
-        `対象利用者：${selectedUser ? selectedUser.name : "全利用者"}`,
+        `対象利用者：${selectedUser ? selectedUser.name : `チェック済み利用者（${targets.length}名）`}`,
         `対象記録：${rows.length}件`,
         ""
       ];
@@ -2195,9 +2229,12 @@
 
       Array.from(grouped.entries())
         .sort((a,b) => {
+          const userA = state.users.find(user => user.id === a[0]);
+          const userB = state.users.find(user => user.id === b[0]);
+          if(userA && userB) return compareUsers(userA, userB);
           const nameA = a[1][0] && a[1][0].entry.userName ? a[1][0].entry.userName : a[0];
           const nameB = b[1][0] && b[1][0].entry.userName ? b[1][0].entry.userName : b[0];
-          return nameA.localeCompare(nameB, "ja");
+          return JAPANESE_COLLATOR.compare(japaneseSortText(nameA), japaneseSortText(nameB));
         })
         .forEach(([, items]) => {
           const userName = items[0] && items[0].entry.userName ? items[0].entry.userName : "未設定";
@@ -2211,8 +2248,7 @@
     function allUserReportFiles(monthText=""){
       const targetMonth = monthText || $("reportMonth").value || today().slice(0,7);
       const usedNames = new Map();
-      return [...state.users]
-        .sort((a,b) => a.name.localeCompare(b.name, "ja"))
+      return reportTargetUsers()
         .map(user => {
           const originalName = reportFileName(user.id, targetMonth);
           const nameKey = originalName.toLocaleLowerCase("ja");
@@ -2226,21 +2262,6 @@
             text:reportText(user.id, fileName)
           };
         });
-    }
-
-    function weeklyText(){
-      const lines = ["【曜日別リハビリ予定】", ""];
-      DAYS.forEach(day => {
-        lines.push(`[${day.full}]`);
-        const items = state.users
-          .filter(user => user.schedule[day.key] && user.schedule[day.key].enabled)
-          .map(user => ({user, schedule:user.schedule[day.key]}))
-          .sort((a,b) => String(a.schedule.time||"").localeCompare(String(b.schedule.time||"")));
-        if(!items.length) lines.push("予定なし");
-        items.forEach(item => lines.push(`${item.schedule.time}　${item.user.name}　${item.schedule.duration}`));
-        lines.push("");
-      });
-      return lines.join("\n").trim();
     }
 
     async function copyText(text, successMessage="コピーしました。", failureMessage="コピーできませんでした。画面下の内容を手動でコピーしてください。"){
@@ -2361,7 +2382,7 @@
       if(!selectedUserId){
         const files = allUserReportFiles(monthText);
         if(!files.length){
-          alert("保存する利用者がいません。");
+          alert("報告書対象にチェックがついた利用者がいません。利用者画面で対象者を選択してください。");
           return;
         }
         const result = await saveReportFiles(files);
@@ -2373,7 +2394,7 @@
         const savedTo = result === "directory" ? "選択したフォルダーに保存" : "保存";
         copyText(
           reportText(""),
-          `${files.length}名分の報告書ファイルを${savedTo}し、全利用者分の内容をコピーしました。`,
+          `${files.length}名分の報告書ファイルを${savedTo}し、チェック済み利用者分の内容をコピーしました。`,
           `${files.length}名分の報告書ファイルは${savedTo}しましたが、内容をコピーできませんでした。`
         );
         return;
@@ -2426,7 +2447,6 @@
           saveState();
           renderUsers();
           renderDaily();
-          renderWeekly();
           alert("復元しました。");
         }catch(e){
           alert("復元できませんでした。");
@@ -2538,7 +2558,6 @@
     $("oneDayModal").addEventListener("click", e => {if(e.target.id === "oneDayModal") closeOneDayModal()});
     $("copyDailyBtn").addEventListener("click", copyDaily);
     $("copyReportBtn").addEventListener("click", copyReport);
-    $("copyWeeklyBtn").addEventListener("click", () => copyText(weeklyText()));
     $("exportBtn").addEventListener("click", exportData);
     $("importBtn").addEventListener("click", () => $("importFile").click());
     $("importFile").addEventListener("change", e => {
@@ -2548,6 +2567,16 @@
     });
 
     $("userList").addEventListener("change", e => {
+      const reportToggle = e.target.closest(".report-target-toggle");
+      if(reportToggle){
+        const row = reportToggle.closest("[data-user-id]");
+        const user = state.users.find(u => u.id === row.dataset.userId);
+        if(!user) return;
+        user.reportEnabled = reportToggle.checked;
+        saveState();
+        renderUsers();
+        return;
+      }
       const input = e.target.closest(".user-name");
       if(!input) return;
       const row = input.closest("[data-user-id]");
@@ -2557,7 +2586,6 @@
       saveState();
       renderUsers();
       renderDaily();
-      renderWeekly();
     });
 
     $("userList").addEventListener("input", e => {
@@ -2610,7 +2638,6 @@
 
     renderUsers();
     renderDaily();
-    renderWeekly();
     setInterval(focusDailyEntryForCurrentTime, 30000);
   </script>
 </body>
