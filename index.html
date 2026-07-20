@@ -11,6 +11,7 @@
     - 利用者設定にふりがなと報告書出力対象のチェックを追加
     - 利用者をふりがな基準の五十音順で表示し、チェック済み利用者だけ報告書出力するよう変更
     - 曜日別タブ・曜日別一覧・週間コピーを削除（利用者の曜日設定と日別予定への反映は継続）
+    - ROM訓練と筋力訓練の実施内容・所見を、各訓練に適した入力案内へ変更
 
     2026-07-17
     - 各介入を「実施内容」と「所見」に分け、自然文変換用の出力にも項目名を追加
@@ -1255,6 +1256,16 @@
       ["interventions.environment","環境調整"],
       ["interventions.family","家族指導"]
     ];
+    const INTERVENTION_PLACEHOLDERS = {
+      "interventions.rom":{
+        content:"対象関節・運動方向、自動／他動、肢位、回数・保持時間",
+        findings:"可動域・制限、疼痛、抵抗感、代償動作、左右差、実施前後の変化"
+      },
+      "interventions.strength":{
+        content:"対象筋群・運動、肢位、負荷・抵抗、回数×セット、介助量",
+        findings:"筋収縮・遂行状況、反復耐性、代償動作、疼痛・疲労、左右差、負荷の適否"
+      }
+    };
     const SPECIAL_FIELDS = [
       ["special.fall","転倒"],
       ["special.medical","受診・服薬変更"],
@@ -1670,16 +1681,20 @@
       const content = getPath(record, path + ".content") || "";
       const findings = getPath(record, path + ".findings") || "";
       const showFindings = String(content).trim() || String(findings).trim();
+      const placeholders = INTERVENTION_PLACEHOLDERS[path] || {
+        content:"動作名、開始姿勢、支持物、介助量、回数",
+        findings:"できた程度、ふらつき、代償動作、介助が必要な場面、疼痛・疲労"
+      };
       return `
         <div class="record-card">
           <div class="record-card-title">${escapeHtml(labelText)}</div>
           <div class="intervention-field">
             <label>実施内容</label>
-            <textarea data-record-field="${escapeAttr(path + ".content")}" placeholder="動作名、開始姿勢、支持物、介助量、回数">${escapeHtml(content)}</textarea>
+            <textarea data-record-field="${escapeAttr(path + ".content")}" placeholder="${escapeAttr(placeholders.content)}">${escapeHtml(content)}</textarea>
           </div>
           <div class="intervention-field findings-field" ${showFindings ? "" : "hidden"}>
             <label>所見</label>
-            <textarea data-record-field="${escapeAttr(path + ".findings")}" placeholder="できた程度、ふらつき、代償動作、介助が必要な場面、疼痛・疲労">${escapeHtml(findings)}</textarea>
+            <textarea data-record-field="${escapeAttr(path + ".findings")}" placeholder="${escapeAttr(placeholders.findings)}">${escapeHtml(findings)}</textarea>
           </div>
         </div>
       `;
